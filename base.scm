@@ -4,15 +4,16 @@
         row col
         north south west east
         ->bits
-        link link? unlink
+        link link? unlink links
         neighbors carve)
 (export <grid>
-        ref
+        rows cols
+        ref cells
         random-cell
         size
+        ->string
         for-each for-each-row
         display-maze-ascii display-maze-graph)
-
 (export display write show)
 
 (use-modules (oop goops)
@@ -80,7 +81,6 @@
 ;; No cell, no carving
 (define-method (carve (proc <accessor>) anything)
   anything)
-
 
 (define-method (display (self <cell>) port)
   (format port "[~a ~a]" (row self) (col self)))
@@ -171,10 +171,3 @@
      [(zero? (modulo counter (cols self)))
       (loop (cdr lst) (1+ counter) (cons "\n" (cons (car lst) rslt)))]
      [else (loop (cdr lst) (1+ counter) (cons (car lst) rslt))])))
-
-(define (display-maze-ascii algorithm rows cols)
-  (display (->string (algorithm (make <grid> rows: rows cols: cols)))))
-
-(define (display-maze-graph file-name algorithm r c)
-  (let ([maze (algorithm (make <grid> rows: r cols: c))])
-    (->svg file-name (rows maze) (cols maze) (map ->bits (cells maze)))))

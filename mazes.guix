@@ -1,0 +1,2 @@
+(specifications->manifest
+ '("guile" "guile-readline" "guile-cairo"))
