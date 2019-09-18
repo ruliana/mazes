@@ -1,7 +1,11 @@
 (define-module (render))
 (export ->svg)
+
 (use-modules (cairo)
              (srfi srfi-1))
+
+;; Do we need to define this?
+(define pi 3.141592654)
 
 (define cell-size 12)
 
@@ -13,7 +17,7 @@
 (define west  #b0010)
 (define east  #b0001)
 
-(define* (->svg file-name rows cols cells optional: colors)
+(define* (->svg file-name rows cols cells optional: colors root-row root-col)
   (define color-list (or colors (circular-list 0)))
   (define width (* cols cell-size))
   (define height (* rows cell-size))
@@ -85,7 +89,12 @@
 
     (cairo-set-matrix context matrix)
     (cairo-set-source-rgb context 0 0 0)
-    (draw-grid context draw-square cells))
+    (draw-grid context draw-square cells)
+    (cairo-set-matrix context matrix))
+
+  (when (and root-col root-row)
+    (cairo-arc context (+ root-col 0.5) (+ root-row 0.5) 0.25 0 (* 2 pi))
+    (cairo-fill context))
 
   (cairo-surface-destroy surface)
   (cairo-destroy context))

@@ -3,6 +3,7 @@
              (ice-9 optargs)
              (ice-9 match)
              (ice-9 q)
+             (ice-9 format)
              (srfi srfi-88) ;; keywords
              (srfi srfi-69) ;; hashtable
              (render)
@@ -42,8 +43,11 @@
   (for-each-row (Λ carve-row <> '()) self)
   self)
 
-;; Djikstra
-;; Not a maze creator, but a maze solver
+;; Breadth First Search
+;; A "maze solver"
+;;
+;; It actually computes the distance of every cell
+;; from a root.
 
 (define-class <distance> ()
   (root init-word: #:root getter: root)
@@ -69,7 +73,7 @@
 (define-method (distances (root <cell>))
   (define distance (make <distance> root: root))
   (define frontier (enq! (make-q) root))
-  (define (head-visited? lst) (ref distance (first lst)))
+  (define (head-visited? lst) (ref distance (1st lst)))
   (define (visit cell)
     (visit-neighbors (links cell) (ref distance cell)))
   (define (visit-neighbors neighs dist)
@@ -89,15 +93,29 @@
 (define (display-maze-ascii algorithm rows cols)
   (display (->string (algorithm (make <grid> rows: rows cols: cols)))))
 
-(define (display-maze-graph file-name algorithm r c)
-  (let* ([maze (algorithm (make <grid> rows: r cols: c))]
-         [distance (distances (ref maze 0 0))]
+(define* (display-maze-graph file-name algorithm r c optional: (cell-coord-color-start '(0 0)))
+  (let* ([maze (algorithm (make <grid> rows: r cols: c))])
+    (apply colorize maze file-name cell-coord-color-start)))
+
+(define-method (colorize (grid <grid>) (file-name <string>) (from-row <integer>) (from-col <integer>))
+  (let* ([distance (distances (ref grid from-row from-col))]
          [max-distance (* 0.5 (longest distance))])
     (->svg file-name
-           (rows maze)
-           (cols maze)
-           (map ->bits (cells maze))
-           (map (λ (e) (- 1 (/ (or (ref distance e) max-distance) max-distance))) (cells maze)))
-    (values maze distance)))
+          (rows grid)
+          (cols grid)
+          (map ->bits (cells grid))
+          (map (λ (e) (- 1 (/ (or (ref distance e) max-distance) max-distance))) (cells grid))
+          from-row from-col)
+    (values grid distance)))
 
-(define-values (maze distance) (display-maze-graph "./labyrinth.svg" (Λ sidewinder! <> 0.9) 38 80))
+;; (define-values (maze distance) (display-maze-graph "./labyrinth.svg" (Λ sidewinder! <> 0.9) 38 80))
+(var rows = 10
+     cols = 10
+     maze = (sidewinder! (make <grid> rows: rows cols: cols) 0.9)
+     (for (:parallel
+           (: coord (lst (: row 0 rows)
+                         (: col 0 cols)
+                         (list row col)))
+           (:integers idx))
+       ;;(format #t "~a ~a ~a\n" (1st coord) (2nd coord) idx)
+       (colorize maze (format #f "./images/lab_~5,'0d.svg" idx) (1st coord) (2nd coord))))
