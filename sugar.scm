@@ -20,6 +20,7 @@
 
 (export Λ var)
 (export empty? rest
+        pair left right
         1st 2nd 3rd 4th 5th
         take drop
         filter-map)
@@ -91,13 +92,11 @@
 ;; I'm still experimenting with alternatives.
 ;; The simplest is make it an alias for "define"
 ;; The most complex is to make is an alias for "match-let*"
-;;
-;; Trying the second alternative first because I like local
-;; state.
 (define-syntax var
-  (syntax-rules (=)
-    [(_ v = value body ...)
-     (let ([v value])
-       (var body ...))]
-    [(_ body0 body ...)
-     (begin body0 body ...)]))
+  (syntax-rules ()
+    [(_ v value)
+     (define v value)]
+    [(_ v value expr* ...)
+     (begin
+       (define v value)
+       (var expr* ...))]))

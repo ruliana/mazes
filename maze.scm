@@ -50,16 +50,10 @@
 ;; from a root.
 
 (define-class <distance> ()
-  (root init-word: #:root getter: root)
   (content getter: content))
 
 (define-method (initialize (self <distance>) initargs)
-  (let-keywords initargs #f
-                ([root #f]
-                 [content (make-hash-table eq?)])
-    (slot-set! self 'content content)
-    (slot-set! self 'root root)
-    (hash-table-set! content root 0)))
+  (slot-set! self 'content (make-hash-table eq?)))
 
 (define-method (ref (self <distance>) (cell <cell>))
   (hash-table-ref/default (content self) cell #f))
@@ -70,9 +64,15 @@
 (define-method (longest (self <distance>))
   (apply max (hash-table-values (content self))))
 
-(define-method (distances (root <cell>))
-  (define distance (make <distance> root: root))
-  (define frontier (enq! (make-q) root))
+(define-method (path (self <distance>))
+  (map left
+    (sort (hash-table->alist (content self))
+          (λ (a b) (< (right a) (right b))))))
+
+(define-method (distances (grid <grid>) (source <coord>))
+  (var root (ref grid source)
+       distance (make <distance>)
+       frontier (enq! (make-q) root))
   (define (head-visited? lst) (ref distance (1st lst)))
   (define (visit cell)
     (visit-neighbors (links cell) (ref distance cell)))
@@ -85,37 +85,61 @@
        (set distance head (1+ dist))
        (enq! frontier head)
        (visit-neighbors tail dist)]))
+
+  (set distance root 0)
   (do ()
       [(q-empty? frontier) distance]
-      (visit (deq! frontier))))
+      (visit (deq! frontier)))
+  distance)
+
+(define-method (shortest-path (grid <grid>) (source-coord <coord>) (target-coord <coord>))
+  (var distance (distances grid source-coord)
+       path (make <distance>)
+       source (ref grid source-coord)
+       target (ref grid target-coord))
+  (set path target (ref distance target))
+  (let loop ([current target])
+    (if (eq? current source) path
+        (let* ([current-distance (ref distance current)]
+               [follow (filter (λ (e) (< (right e) current-distance))
+                               (map (λ (e) (pair e (ref distance e)))
+                                    (links current)))])
+          (match follow
+            [() path]
+            [((next . dist) . _)
+             (set path next dist)
+             (loop next)])))))
+
 
 ;; Display maze
 (define (display-maze-ascii algorithm rows cols)
   (display (->string (algorithm (make <grid> rows: rows cols: cols)))))
 
-(define* (display-maze-graph file-name algorithm r c optional: (cell-coord-color-start '(0 0)))
-  (let* ([maze (algorithm (make <grid> rows: r cols: c))])
-    (apply colorize maze file-name cell-coord-color-start)))
+(define* (display-maze-graph file-name algorithm r c optional: (cell-coord-color-start (coord 0 0)))
+  (var maze (algorithm (make <grid> rows: r cols: c)))
+  (colorize maze file-name cell-coord-color-start))
 
-(define-method (colorize (grid <grid>) (file-name <string>) (from-row <integer>) (from-col <integer>))
-  (let* ([distance (distances (ref grid from-row from-col))]
-         [max-distance (* 0.5 (longest distance))])
-    (->svg file-name
-          (rows grid)
-          (cols grid)
-          (map ->bits (cells grid))
-          (map (λ (e) (- 1 (/ (or (ref distance e) max-distance) max-distance))) (cells grid))
-          from-row from-col)
-    (values grid distance)))
+(define-method (colorize (grid <grid>) (file-name <string>) (from <coord>))
+  (var distance (distances grid from)
+       max-distance (* 0.5 (longest distance)))
+  (->svg file-name
+        (rows grid)
+        (cols grid)
+        (map ->bits (cells grid))
+        (map (λ (e) (- 1 (/ (or (ref distance e) max-distance) max-distance))) (cells grid))
+        (row from) (col from))
+  (values grid distance))
 
-;; (define-values (maze distance) (display-maze-graph "./labyrinth.svg" (Λ sidewinder! <> 0.9) 38 80))
-(var rows = 10
-     cols = 10
-     maze = (sidewinder! (make <grid> rows: rows cols: cols) 0.9)
-     (for (:parallel
-           (: coord (lst (: row 0 rows)
-                         (: col 0 cols)
-                         (list row col)))
-           (:integers idx))
-       ;;(format #t "~a ~a ~a\n" (1st coord) (2nd coord) idx)
-       (colorize maze (format #f "./images/lab_~5,'0d.svg" idx) (1st coord) (2nd coord))))
+;; (define-values (maze distance) (display-maze-graph "./labyrinth.svg" (Λ sidewinder! <> 0.9) 10 10))
+
+;; (for (: e (path (shortest-path maze (coord 0 0) (coord 9 9))))
+;;      (format #t "~a\n" (display e #f)))
+
+(let ()
+  (var rows 30
+       cols 30
+       maze (sidewinder! (make <grid> rows: rows cols: cols) 0.9))
+  (for (:parallel
+        (: point (path (shortest-path maze (coord 0 0) (coord (- rows 1) (- cols 1)))))
+        (:integers idx))
+       (colorize maze (format #f "./images/lab_~5,'0d.svg" idx) (coord point))))

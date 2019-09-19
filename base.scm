@@ -1,5 +1,7 @@
 ;; Basic maze objects to be used in the algorithms
 (define-module (base))
+(export <coord>
+        coord row col)
 (export <cell>
         row col
         north south west east
@@ -23,6 +25,15 @@
              (render)
              (sugar))
 
+;; Row Col Coordinates
+(define-class <coord> ()
+  (row init-keyword: #:row getter: row)
+  (col init-keyword: #:col getter: col))
+
+(define-method (coord (row <integer>) (col <integer>))
+  (make <coord> row: row col: col))
+
+
 ;; Cell
 (define-class <cell> ()
   (row init-keyword: #:row getter: row)
@@ -32,6 +43,9 @@
   (west init-value: #f accessor: west)
   (east init-value: #f accessor: east)
   (links init-form: (make-hash-table eq?)))
+
+(define-method (coord (self <cell>))
+  (coord (row self) (col self)))
 
 (define-method (->bits (self <cell>))
   (let loop ([rslt #b1111]
@@ -116,9 +130,9 @@
   (define pos (Λ ref self <> <>))
 
   (define (create-grid)
-    (list-ec (: r (rows self))
-             (: c (cols self))
-             (make <cell> row: r col: c)))
+    (lst (: r (rows self))
+         (: c (cols self))
+         (make <cell> row: r col: c)))
 
   (define (connect-neighbors cell)
     (define row (slot-ref cell 'row))
@@ -139,6 +153,9 @@
             [index (+ col (* row (cols self)))])
         (list-ref g index))
       #f))
+
+(define-method (ref (self <grid>) (coord <coord>))
+  (ref self (row coord) (col coord)))
 
 (define-method (random-cell (self <grid>))
   (ref self
