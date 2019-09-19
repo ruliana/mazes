@@ -136,10 +136,12 @@
 ;;      (format #t "~a\n" (display e #f)))
 
 (let ()
-  (var rows 30
-       cols 30
+  (var rows 31
+       cols 31
+       half-row (/ (- cols 1) 2)
+       rows-idx (- rows 1)
        maze (sidewinder! (make <grid> rows: rows cols: cols) 0.9))
   (for (:parallel
-        (: point (path (shortest-path maze (coord 0 0) (coord (- rows 1) (- cols 1)))))
+        (: point (path (shortest-path maze (coord 0 half-row) (coord rows-idx half-row))))
         (:integers idx))
        (colorize maze (format #f "./images/lab_~5,'0d.svg" idx) (coord point))))
