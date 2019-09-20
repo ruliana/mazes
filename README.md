@@ -2,7 +2,7 @@
 Mazes for Programmes in Guile Scheme
 
 I have 3 goals doing this:
-- Learn Guile Scheme. I'm particularly interested in FFI and multithreading. I think the C integration + Guix can bring the same reasoning to Guile as Clojure + Java. If we have an easy way to incorporate C code to Guile (and install C libs), that gave me the same "batteries included" trait of Clojure.
+- Learn Guile Scheme. I'm particularly interested in FFI and multithreading. I think the C integration + Guix can bring the same reasoning to Guile as Clojure + Java. If we have an easy way to incorporate C code to Guile (and install C libs), that gives me the same "batteries included" trait of Clojure.
 - Improve my macro-fu. That's really a very hot topic for me.
 - Create a "Guile flavor" that makes me happy.
 
@@ -16,7 +16,7 @@ That means the code, in the long run, will not be Guile Scheme anymore, but a bu
 4. Prefix notation is gold, but don't be afraid of infix. Use it to remove structural parenthesis if we can't rely just in forms order.
 5. Frequent used forms are short. The lesser the frequency, the longer the word.
 
-# Example "var"
+# Example "let"
 
 Let's illustrate some of the principles above.
 
