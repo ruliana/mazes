@@ -36,3 +36,17 @@ Not bad, but that extra parenthesis are just adding noise in this case. So why n
 (let [x (something 1 2 3)]
   (+ x 1))
 ```
+
+As I don't want to mess with "let", so:
+
+```Scheme
+(var [x (something 1 2 3)]
+  (+ x 1))
+```
+
+In the end, I went crazy and think that we can have `var` acting on the same scope, too.
+
+```Scheme
+(var [x (something 1 2 3)])
+(+ x 1)
+```
