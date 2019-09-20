@@ -15,6 +15,7 @@ That means the code, in the long run, will not be Guile Scheme anymore, but a bu
 3. Parenthesis are gold, useless parenthesis are not. So remove "structural" code.
 4. Prefix notation is gold, but don't be afraid of infix. Use it to remove structural parenthesis if we can't rely just in forms order.
 5. Frequent used forms are short. The lesser the frequency, the longer the word.
+6. Blantantly steal from other languages. If we are going to reinvent the wheel, at least let's use the good designs out there!
 
 # Example "let"
 
