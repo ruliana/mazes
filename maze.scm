@@ -1,6 +1,5 @@
 (add-to-load-path "./")
-(use-modules (oop goops)
-             (ice-9 optargs)
+(use-modules (ice-9 optargs)
              (ice-9 match)
              (ice-9 q)
              (ice-9 format)
@@ -15,8 +14,8 @@
 
 ;; Binary tree
 
-(define-method (binary-tree! (self <grid>))
-  (define (make-hole cell)
+(def (binary-tree! (self <grid>))
+  (def (make-hole cell)
     (cond
      [(and (east cell) (north cell)) (carve (sample north east) cell)]
      [(east cell) (carve east cell)]
@@ -25,11 +24,11 @@
   self)
 
 ;; Sidewider
-(define-method (sidewinder! (self <grid>))
+(def (sidewinder! (self <grid>))
   (sidewinder! self 0.7))
 
-(define-method (sidewinder! (self <grid>) (horizontal-probability <real>))
-  (define (carve-row row run)
+(def (sidewinder! (self <grid>) (horizontal-probability <real>))
+  (def (carve-row row run)
     (if (not (empty? row))
         (let ([cell (car row)]
               [rest (cdr row)])
@@ -49,34 +48,34 @@
 ;; It actually computes the distance of every cell
 ;; from a root.
 
-(define-class <distance> ()
+(class <distance> ()
   (content getter: content))
 
-(define-method (initialize (self <distance>) initargs)
+(def (initialize (self <distance>) initargs)
   (slot-set! self 'content (make-hash-table eq?)))
 
-(define-method (ref (self <distance>) (cell <cell>))
+(def (ref (self <distance>) (cell <cell>))
   (hash-table-ref/default (content self) cell #f))
 
-(define-method (set (self <distance>) (cell <cell>) (distance <number>))
+(def (set (self <distance>) (cell <cell>) (distance <number>))
   (hash-table-set! (content self) cell distance))
 
-(define-method (longest (self <distance>))
+(def (longest (self <distance>))
   (apply max (hash-table-values (content self))))
 
-(define-method (path (self <distance>))
+(def (path (self <distance>))
   (map left
     (sort (hash-table->alist (content self))
           (λ (a b) (< (right a) (right b))))))
 
-(define-method (distances (grid <grid>) (source <coord>))
+(def (distances (grid <grid>) (source <coord>))
   (var root (ref grid source)
        distance (make <distance>)
        frontier (enq! (make-q) root))
-  (define (head-visited? lst) (ref distance (1st lst)))
-  (define (visit cell)
+  (def (head-visited? lst) (ref distance (1st lst)))
+  (def (visit cell)
     (visit-neighbors (links cell) (ref distance cell)))
-  (define (visit-neighbors neighs dist)
+  (def (visit-neighbors neighs dist)
     (match neighs
       [() #f]
       [(? head-visited? (head tail ...))
@@ -92,7 +91,7 @@
       (visit (deq! frontier)))
   distance)
 
-(define-method (shortest-path (grid <grid>) (source-coord <coord>) (target-coord <coord>))
+(def (shortest-path (grid <grid>) (source-coord <coord>) (target-coord <coord>))
   (var distance (distances grid source-coord)
        path (make <distance>)
        source (ref grid source-coord)
@@ -112,14 +111,17 @@
 
 
 ;; Display maze
-(define (display-maze-ascii algorithm rows cols)
+(def (display-maze-ascii algorithm rows cols)
   (display (->string (algorithm (make <grid> rows: rows cols: cols)))))
 
-(define* (display-maze-graph file-name algorithm r c optional: (cell-coord-color-start (coord 0 0)))
+(def (display-maze-graph file-name algorithm r c)
+  (display-maze-graph file-name algorithm r c (coord 0 0)))
+
+(def (display-maze-graph file-name algorithm r c cell-coord-color-start)
   (var maze (algorithm (make <grid> rows: r cols: c)))
   (colorize maze file-name cell-coord-color-start))
 
-(define-method (colorize (grid <grid>) (file-name <string>) (from <coord>))
+(def (colorize (grid <grid>) (file-name <string>) (from <coord>))
   (var distance (distances grid from)
        max-distance (* 0.5 (longest distance)))
   (->svg file-name

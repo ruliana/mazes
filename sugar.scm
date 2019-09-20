@@ -9,14 +9,15 @@
 ;; kinda naive.
 (define-module (sugar))
 
-(use-modules ((srfi srfi-1)  ;; Great list operators
+
+(use-modules (srfi srfi-88)  ;; Sane keywords
+             ((srfi srfi-1)  ;; Great list operators
               ;; Weird trick to be able to use a word ending with ":"
               ;; and srfi-88 at same time.
-              renamer: (symbol-prefix-proc (string->symbol "srfi1:")))
+              #:renamer (symbol-prefix-proc (string->symbol "srfi1:")))
              (srfi srfi-26)  ;; Cut
              (srfi srfi-42)  ;; List comprehension
-             (srfi srfi-88)  ;; Sane keywords
-             (oop goops))    ;; Screw OOP, I need function overloading!
+             (oop goops))    ;; Screw OOP, I need function overloading! :D
 
 (export Λ var)
 (export empty? rest
@@ -53,6 +54,25 @@
 
 (define-syntax for (identifier-syntax do-ec))
 (define-syntax lst (identifier-syntax list-ec))
+
+
+;; GOOPS as default way to do things
+;;
+;; That means names that are shorter, more common
+;; in other languages, and maybe some extra default
+;; definitions.
+(export class
+        def)
+(re-export make
+           define-generic
+           slot-ref slot-set!
+           initialize
+           <object> <class>
+           <real> <number> <integer>
+           <string> <list>)
+
+(define-syntax class (identifier-syntax define-class))
+(define-syntax def (identifier-syntax define-method))
 
 
 ;; SRFI-1
