@@ -6,7 +6,7 @@ I have 3 goals doing this:
 - Improve my macro-fu. That's really a very hot topic for me.
 - Create a "Guile flavor" that makes me happy.
 
-That means the code, in the long run, will not be Guile Scheme anymore, but a bunch of macros and definitions that make me more enjoyment while programing. What means I'm following the Ruby principle of (make programmers happy)[https://www.artima.com/intv/rubyP.html].
+That means the code, in the long run, will not be Guile Scheme anymore, but a bunch of macros and definitions that make me more enjoyment while programing. What means I'm following the Ruby principle of [make programmers happy](https://www.artima.com/intv/rubyP.html).
 
 # The principles
 
