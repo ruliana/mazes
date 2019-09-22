@@ -1,0 +1,3 @@
+* Improvements
+** TODO On <grid>, replace the list for a vector
+** TODO On <grid>, use a persistent collection instead a mutable one

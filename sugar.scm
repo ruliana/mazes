@@ -7,24 +7,24 @@
 ;; remember why I thought it was a good idea at that
 ;; moment. Later, probably, I'll find those comments
 ;; kinda naive.
-(define-module (sugar))
-
-
-(use-modules (srfi srfi-88)  ;; Sane keywords
-             ((srfi srfi-1)  ;; Great list operators
-              ;; Weird trick to be able to use a word ending with ":"
-              ;; and srfi-88 at same time.
-              #:renamer (symbol-prefix-proc (string->symbol "srfi1:")))
-             (srfi srfi-26)  ;; Cut
-             (srfi srfi-42)  ;; List comprehension
-             (oop goops))    ;; Screw OOP, I need function overloading! :D
+(define-module (sugar)
+  #:use-module (srfi srfi-88)  ;; Sane keywords
+  #:use-module ((srfi srfi-1)  ;; Great list operators
+                ;; Weird trick to be able to use a word ending with ":"
+                ;; and srfi-88 at same time.
+                #:renamer (symbol-prefix-proc (string->symbol "srfi1:")))
+  #:use-module (srfi srfi-26)  ;; Cut
+  #:use-module (srfi srfi-42)  ;; List comprehension
+  #:use-module (oop goops)     ;; Screw OOP, I need function overloading! :D
+  #:duplicates (merge-generics))
 
 (export Λ var)
 (export empty? rest
         pair left right
         1st 2nd 3rd 4th 5th
         take drop
-        filter-map)
+        filter-map
+        size)
 
 ;; Upper lambda as an alias for "cut".
 ;;
@@ -67,6 +67,7 @@
            define-generic
            slot-ref slot-set!
            initialize
+           <procedure> <accessor> <method> <generic>
            <object> <class>
            <real> <number> <integer>
            <string> <list>)
@@ -103,6 +104,7 @@
 (define-method (filter-map (lst <list>) (f <procedure>))
   (srfi1:filter-map f lst))
 
+(define-generic size)
 (define-method (size (self <list>)) (length self))
 (define-method (size (self <string>)) (string-length self))
 
@@ -112,11 +114,55 @@
 ;; I'm still experimenting with alternatives.
 ;; The simplest is make it an alias for "define"
 ;; The most complex is to make is an alias for "match-let*"
+;;
+;; (var [x 1])                <= define
+;; (var [x 1] something)      <= let
+;; (var loop [x 1] something) <= named let optional
+(export internal-let)
+(define-syntax internal-let
+  (syntax-rules ()
+    [(_ (done ...) () expr ...)
+     (let* (done ...) expr ...)]
+    [(_ (done ...) (v val remaining ...) expr ...)
+     (internal-let (done ... (v val)) (remaining ...) expr ...)]))
+
 (define-syntax var
   (syntax-rules ()
-    [(_ v value)
-     (define v value)]
-    [(_ v value expr* ...)
-     (begin
-       (define v value)
-       (var expr* ...))]))
+    [(_ () expr0 expr* ...)
+     (let () expr0 expr* ...)]
+
+    [(_ (v val))
+     (define v val)]
+
+    [(_ (v val rest ...))
+     (begin (define v val)
+            (var (rest ...)))]
+
+    [(_ (args ...) expr0 expr* ...)
+     (internal-let
+      ()
+      (args ...)
+      expr0 expr* ...)]
+
+    [(_ args ...)
+     (var (args ...))]))
+
+
+;; Small helpers
+(export add1 sub1)
+
+(define add1 1+)
+(define sub1 1-)
+
+
+;; Printing
+(export str print)
+
+(define-method (str thing)
+  (format #f "~a" thing))
+
+(define-method (str thing1 thing2 . things)
+  (string-join (map str `(,thing1 ,thing2 ,@things))))
+
+(define-method (print . things)
+  (format #t "~a\n" (apply str things)))

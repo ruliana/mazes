@@ -6,7 +6,7 @@
         row col
         north south west east
         ->bits
-        link link? unlink links
+        link link? unlink links links?
         neighbors carve)
 (export <grid>
         rows cols
@@ -16,7 +16,7 @@
         ->string
         for-each for-each-row
         display-maze-ascii display-maze-graph)
-(export display write show)
+(export display write show str)
 
 (use-modules (oop goops)
              (srfi srfi-42)  ;; list comprehension
@@ -61,8 +61,6 @@
                  (rest directions)
                  (rest bit-list))])))
 
-(define-generic link)
-
 (define-method (link (first <cell>) (second <cell>))
   (hash-table-set! (slot-ref first 'links) second #t)
   (hash-table-set! (slot-ref second 'links) first #t))
@@ -70,12 +68,10 @@
 ;; If any of them are not cells, just ignore
 (define-method (link first second) #f)
 
-
 (define-method (link? (first <cell>) (second <cell>))
   (hash-table-exists? (slot-ref first 'links) second))
 
 (define-method (link? first second) #f)
-
 
 (define-method (unlink (first <cell>) (second <cell>))
   (hash-table-delete! (slot-ref first 'links) second)
@@ -87,6 +83,9 @@
 (define-method (neighbors (self <cell>))
   (filter-map (Λ <> self) (list north south west east)))
 
+(define-method (links? (self <cell>))
+  (empty? (links self)))
+
 
 (define-method (carve (proc <accessor>) (cell <cell>))
   (link cell (proc cell))
@@ -96,8 +95,14 @@
 (define-method (carve (proc <accessor>) anything)
   anything)
 
+(define-method (display (self <cell>))
+  (display self #f))
+
 (define-method (display (self <cell>) port)
-  (format port "[~a ~a]" (row self) (col self)))
+  (format port "~a" (str self)))
+
+(define-method (str (self <cell>))
+  (format #f "[~a ~a]" (row self) (col self)))
 
 (define-method (write (self <cell>) port)
   (format port "<cell> row: ~a col: ~a" (row self) (col self)))

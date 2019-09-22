@@ -1,14 +1,16 @@
 (add-to-load-path "./")
-(use-modules (ice-9 optargs)
-             (ice-9 match)
-             (ice-9 q)
-             (ice-9 format)
-             (srfi srfi-88) ;; keywords
-             (srfi srfi-69) ;; hashtable
-             (render)
-             (random)
-             (base)
-             (sugar))
+(define-module (maze)
+  #:use-module (oop goops)
+  #:use-module (ice-9 optargs)
+  #:use-module (ice-9 match)
+  #:use-module (ice-9 q)
+  #:use-module (ice-9 format)
+  #:use-module (srfi srfi-88) ;; keywords
+  #:use-module (srfi srfi-69) ;; hashtable
+  #:use-module (sugar)
+  #:use-module (render)
+  #:use-module (random)
+  #:use-module (base))
 
 ;; MAZE ALGORITHMS
 
@@ -41,6 +43,47 @@
                  (carve-row rest '())]))))
   (for-each-row (Λ carve-row <> '()) self)
   self)
+
+;; Aldous Broder
+(def (aldous-broder! (self <grid>))
+  (let loop ([unvisited (sub1 (size self))]
+             [cell (random-cell self)])
+    (var [neighbor (sample (neighbors cell))]
+      (cond
+       [(zero? unvisited) self]
+       [(links? neighbor)
+        (link cell neighbor)
+        (loop (sub1 unvisited) neighbor)]
+       [else (loop unvisited neighbor)]))))
+
+;; Wilson's
+(def (wilson! (self <grid>))
+
+  (def (solidify-path unvisited path)
+    (for (:parallel
+          (: cell1 path)
+          (: cell2 (rest path)))
+      (link cell1 cell2))
+    (filter (Λ (negate member) <> path) unvisited))
+
+  (def (carve unvisited)
+    (def (build-path path cell)
+      (if (member cell unvisited)
+          (var [new-cell (sample (neighbors cell))
+                remaining (member new-cell path)]
+            (if remaining
+                (build-path remaining new-cell)
+                (build-path (cons new-cell path) new-cell)))
+          path))
+
+    (if (empty? unvisited)
+        self
+        (var [cell (sample unvisited)
+              path (build-path (list cell) cell)]
+          (carve (solidify-path unvisited path)))))
+
+  (carve (rest (cells self))))
+
 
 ;; Breadth First Search
 ;; A "maze solver"
@@ -99,16 +142,15 @@
   (set path target (ref distance target))
   (let loop ([current target])
     (if (eq? current source) path
-        (let* ([current-distance (ref distance current)]
-               [follow (filter (λ (e) (< (right e) current-distance))
-                               (map (λ (e) (pair e (ref distance e)))
-                                    (links current)))])
+        (var [current-distance (ref distance current)
+              follow (filter (λ (e) (< (right e) current-distance))
+                             (map (λ (e) (pair e (ref distance e)))
+                                  (links current)))]
           (match follow
             [() path]
             [((next . dist) . _)
              (set path next dist)
              (loop next)])))))
-
 
 ;; Display maze
 (def (display-maze-ascii algorithm rows cols)
@@ -132,18 +174,20 @@
         (row from) (col from))
   (values grid distance))
 
-;; (define-values (maze distance) (display-maze-graph "./labyrinth.svg" (Λ sidewinder! <> 0.9) 10 10))
+(define-values (maze distance) (display-maze-graph "./labyrinth1.svg" wilson! 31 31))
+(define-values (maze distance) (display-maze-graph "./labyrinth2.svg" aldous-broder! 31 31))
 
 ;; (for (: e (path (shortest-path maze (coord 0 0) (coord 9 9))))
 ;;      (format #t "~a\n" (display e #f)))
 
-(let ()
-  (var rows 31
-       cols 31
-       half-row (/ (- cols 1) 2)
-       rows-idx (- rows 1)
-       maze (sidewinder! (make <grid> rows: rows cols: cols) 0.9))
-  (for (:parallel
-        (: point (path (shortest-path maze (coord 0 half-row) (coord rows-idx half-row))))
-        (:integers idx))
-       (colorize maze (format #f "./images/lab_~5,'0d.svg" idx) (coord point))))
+;; (def (animation (algorithm <generic>) (rows <integer>) (cols <integer>))
+;;   (var half-row (/ (- cols 1) 2)
+;;        rows-idx (sub1 rows)
+;;        cols-idx (sub1 cols)
+;;        maze (algorithm (make <grid> rows: rows cols: cols)))
+;;   (for (:parallel
+;;         (: point (path (shortest-path maze (coord 0 0) (coord rows-idx cols-idx))))
+;;         (:integers idx))
+;;        (colorize maze (format #f "./images/maze_~5,'0d.svg" idx) (coord point))))
+
+;; (animation aldous-broder! 31 31)
