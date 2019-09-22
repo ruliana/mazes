@@ -31,16 +31,16 @@
 
 (def (sidewinder! (self <grid>) (horizontal-probability <real>))
   (def (carve-row row run)
-    (if (not (empty? row))
-        (let ([cell (car row)]
-              [rest (cdr row)])
-          (cond
-           [(and (east cell) (chance horizontal-probability))
-            (carve-row rest (cons (carve east cell) run))]
-           [(not (north cell))
-            (carve-row rest (cons (carve east cell) run))]
-           [else (carve north (sample (cons cell run)))
-                 (carve-row rest '())]))))
+    (return #f if (empty? row))
+    (var [cell (car row)
+          rest (cdr row)]
+      (cond
+       [(and (east cell) (chance horizontal-probability))
+        (carve-row rest (cons (carve east cell) run))]
+       [(not (north cell))
+        (carve-row rest (cons (carve east cell) run))]
+       [else (carve north (sample (cons cell run)))
+             (carve-row rest '())])))
   (for-each-row (Λ carve-row <> '()) self)
   self)
 
@@ -60,27 +60,25 @@
 (def (wilson! (self <grid>))
 
   (def (solidify-path unvisited path)
-    (for (:parallel
-          (: cell1 path)
-          (: cell2 (rest path)))
-      (link cell1 cell2))
-    (filter (Λ (negate member) <> path) unvisited))
+    (for (:consecutive cell1 cell2 path)
+      (link cell1 cell2)))
 
   (def (carve unvisited)
-    (def (build-path path cell)
-      (if (member cell unvisited)
-          (var [new-cell (sample (neighbors cell))
-                remaining (member new-cell path)]
-            (if remaining
-                (build-path remaining new-cell)
-                (build-path (cons new-cell path) new-cell)))
-          path))
+    (return self if (empty? unvisited))
 
-    (if (empty? unvisited)
-        self
-        (var [cell (sample unvisited)
-              path (build-path (list cell) cell)]
-          (carve (solidify-path unvisited path)))))
+    (def (build-path path cell)
+      (return path unless (member cell unvisited))
+      (var [new-cell (sample (neighbors cell))
+            remaining (member new-cell path)]
+        (if remaining
+            (build-path remaining new-cell)
+            (build-path (cons new-cell path) new-cell))))
+
+    (var [cell (sample unvisited)
+          path (build-path (list cell) cell)
+          unvisited (filter-out (Λ member <> path) unvisited)]
+      (solidify-path unvisited path)
+      (carve unvisited)))
 
   (carve (rest (cells self))))
 
@@ -176,6 +174,7 @@
 
 (define-values (maze distance) (display-maze-graph "./labyrinth1.svg" wilson! 31 31))
 (define-values (maze distance) (display-maze-graph "./labyrinth2.svg" aldous-broder! 31 31))
+(define-values (maze distance) (display-maze-graph "./labyrinth3.svg" sidewinder! 31 31))
 
 ;; (for (: e (path (shortest-path maze (coord 0 0) (coord 9 9))))
 ;;      (format #t "~a\n" (display e #f)))

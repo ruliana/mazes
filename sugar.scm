@@ -24,6 +24,7 @@
         1st 2nd 3rd 4th 5th
         take drop
         filter-map
+        filter-out
         size)
 
 ;; Upper lambda as an alias for "cut".
@@ -46,7 +47,8 @@
 
 ;; List comprehension with sane names
 (export for
-        lst)
+        lst
+        :consecutive)
 (re-export :
            :range
            :integers
@@ -55,6 +57,17 @@
 (define-syntax for (identifier-syntax do-ec))
 (define-syntax lst (identifier-syntax list-ec))
 
+(define-syntax :consecutive
+  (syntax-rules ()
+    [(_ cc v1 v2 coll)
+     (:parallel cc
+                (: v1 coll)
+                (: v2 (rest coll)))]
+    [(_ cc v1 v2 v3 coll)
+     (:parallel cc
+               (: v1 coll)
+               (: v2 (rest coll))
+               (: v3 (rest (rest coll))))]))
 
 ;; GOOPS as default way to do things
 ;;
@@ -73,7 +86,23 @@
            <string> <list>)
 
 (define-syntax class (identifier-syntax define-class))
-(define-syntax def (identifier-syntax define-method))
+
+(define-syntax prepare-if
+  (syntax-rules (return if unless)
+    [(_ (return this if that) body ...)
+     (if that this (prepare-if body ...))]
+    [(_ (return this unless that) body ...)
+     (if that (prepare-if body ...) this)]
+    [(_ body ...)
+     (begin body ...)]))
+
+(define-syntax def
+  (syntax-rules (return if)
+    [(_ (definition ...)
+        body ...)
+     (define-method (definition ...)
+       (prepare-if body ...))]))
+
 
 
 ;; SRFI-1
@@ -99,10 +128,8 @@
 (define-method (filter-map (f <procedure>) (lst <list>))
   (srfi1:filter-map f lst))
 
-;; This version is better for multilines.
-;; Should we assume it as default?
-(define-method (filter-map (lst <list>) (f <procedure>))
-  (srfi1:filter-map f lst))
+(define-method (filter-out (f <procedure>) (lst <list>))
+  (filter (negate f) lst))
 
 (define-generic size)
 (define-method (size (self <list>)) (length self))
