@@ -1,5 +1,13 @@
 ;; Basic maze objects to be used in the algorithms
-(define-module (base))
+(define-module (base)
+  #:use-module (oop goops)
+  #:use-module (ice-9 match)
+  #:use-module (srfi srfi-42)  ;; list comprehension
+  #:use-module (srfi srfi-69)  ;; hash-table
+  #:use-module (srfi srfi-88)  ;; keywords
+  #:use-module (render)
+  #:use-module (sugar))
+
 (export <coord>
         coord row col)
 (export <cell>
@@ -7,6 +15,7 @@
         north south west east
         ->bits
         link link? unlink links links?
+        make-neighbor-sampler
         neighbors carve)
 (export <grid>
         rows cols
@@ -15,15 +24,11 @@
         size
         ->string
         for-each for-each-row
-        display-maze-ascii display-maze-graph)
+        display-maze-ascii display-maze-graph
+        columner rowner)
 (export display write show str)
+(export exclude-cells)
 
-(use-modules (oop goops)
-             (srfi srfi-42)  ;; list comprehension
-             (srfi srfi-69)  ;; hash-table
-             (srfi srfi-88)  ;; keywords
-             (render)
-             (sugar))
 
 ;; Row Col Coordinates
 (define-class <coord> ()
@@ -80,12 +85,18 @@
 (define-method (links (self <cell>))
   (hash-table-keys (slot-ref self 'links)))
 
-(define-method (neighbors (self <cell>))
-  (filter-map (Λ <> self) (list north south west east)))
-
 (define-method (links? (self <cell>))
   (empty? (links self)))
 
+(define-method (neighbors (self <cell>))
+  (filter-map (Λ <> self) (list north south west east)))
+
+(define-method (make-neighbor-sampler . probas)
+  (define (choose cell)
+     (var [direction (apply prob-sample (zip probas (list north south west east)))
+           next (direction cell)]
+       (if next next (choose cell))))
+  choose)
 
 (define-method (carve (proc <accessor>) (cell <cell>))
   (link cell (proc cell))
@@ -193,3 +204,25 @@
      [(zero? (modulo counter (cols self)))
       (loop (cdr lst) (1+ counter) (cons "\n" (cons (car lst) rslt)))]
      [else (loop (cdr lst) (1+ counter) (cons (car lst) rslt))])))
+
+
+;; Where am I in the grid?
+
+(def (columner (grid <grid>) (all-cols <integer>) (this-col <integer>))
+  (var [lower-bound (* (sub1 this-col) (/ (cols grid) all-cols))
+        upper-bound (* this-col (/ (cols grid) all-cols))])
+  (λ (cell)
+    (and (>= (col cell) lower-bound)
+         (<  (col cell) upper-bound))))
+
+(def (rowner (grid <grid>) (all-rows <integer>) (this-row <integer>))
+  (var [lower-bound (* (sub1 this-row) (/ (rows grid) all-rows))
+        upper-bound (* this-row (/ (rows grid) all-rows))])
+  (λ (cell)
+    (and (>= (row cell) lower-bound)
+         (<  (row cell) upper-bound))))
+
+
+;; More helpers
+(def (exclude-cells (from <list>) (exclude <list>))
+  (filter-out (Λ member <> exclude) from))

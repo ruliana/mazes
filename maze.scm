@@ -58,6 +58,23 @@
 
 ;; Wilson's
 (def (wilson! (self <grid>))
+  (var sample-neighbor-vert-north (make-neighbor-sampler 0.8 0.0 0.2 0.0))
+  (var sample-neighbor-vert-south (make-neighbor-sampler 0.0 0.8 0.2 0.0))
+  (var sample-neighbor-horz-north (make-neighbor-sampler 0.2 0.0 0.8 0.0))
+  (var sample-neighbor-horz-south (make-neighbor-sampler 0.0 0.2 0.8 0.0))
+  (var sample-neighbor-horz-middl (make-neighbor-sampler 0.04 0.0 0.48 0.48))
+  (var sample-neighbor-random (make-neighbor-sampler 0.25 0.25 0.25 0.25))
+  (def (sample-neighbor cell)
+    (var [col1? (columner self 3 1)
+          col2? (columner self 3 2)
+          col3? (columner self 3 3)
+          row1? (rowner self 3 1)
+          row1? (rowner self 3 2)
+          row1? (rowner self 3 3)]
+      (cond
+        [(col1? cell) (sample-neighbor-vert-north cell)]
+        [(col2? cell) (sample-neighbor-vert-south cell)]
+        [(col3? cell) (sample-neighbor-random cell)])))
 
   (def (solidify-path unvisited path)
     (for (:consecutive cell1 cell2 path)
@@ -68,7 +85,7 @@
 
     (def (build-path path cell)
       (return path unless (member cell unvisited))
-      (var [new-cell (sample (neighbors cell))
+      (var [new-cell (sample-neighbor cell)
             remaining (member new-cell path)]
         (if remaining
             (build-path remaining new-cell)
@@ -80,8 +97,9 @@
       (solidify-path unvisited path)
       (carve unvisited)))
 
-  (carve (rest (cells self))))
-
+  (var [all-cells (cells self)
+        unvisited (rest all-cells)]
+    (carve unvisited)))
 
 ;; Breadth First Search
 ;; A "maze solver"
@@ -172,12 +190,9 @@
         (row from) (col from))
   (values grid distance))
 
-(define-values (maze distance) (display-maze-graph "./labyrinth1.svg" wilson! 31 31))
+(define-values (maze distance) (display-maze-graph "./labyrinth1.svg" wilson! 32 64))
 (define-values (maze distance) (display-maze-graph "./labyrinth2.svg" aldous-broder! 31 31))
 (define-values (maze distance) (display-maze-graph "./labyrinth3.svg" sidewinder! 31 31))
-
-;; (for (: e (path (shortest-path maze (coord 0 0) (coord 9 9))))
-;;      (format #t "~a\n" (display e #f)))
 
 ;; (def (animation (algorithm <generic>) (rows <integer>) (cols <integer>))
 ;;   (var half-row (/ (- cols 1) 2)
@@ -189,4 +204,4 @@
 ;;         (:integers idx))
 ;;        (colorize maze (format #f "./images/maze_~5,'0d.svg" idx) (coord point))))
 
-;; (animation aldous-broder! 31 31)
+;; (animation wilson! 32 64)

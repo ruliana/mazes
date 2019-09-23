@@ -8,6 +8,7 @@
 ;; moment. Later, probably, I'll find those comments
 ;; kinda naive.
 (define-module (sugar)
+  #:use-module (ice-9 match)
   #:use-module (srfi srfi-88)  ;; Sane keywords
   #:use-module ((srfi srfi-1)  ;; Great list operators
                 ;; Weird trick to be able to use a word ending with ":"
@@ -22,6 +23,8 @@
 (export empty? rest
         pair left right
         1st 2nd 3rd 4th 5th
+        first last
+        zip
         take drop
         filter-map
         filter-out
@@ -38,6 +41,8 @@
 (define 3rd srfi1:third)
 (define 4th srfi1:fourth)
 (define 5th srfi1:fifth)
+
+(define zip srfi1:zip)
 
 ;; For using with pairs
 (define pair cons)
@@ -119,6 +124,8 @@
 
 (define-method (first (lst <list>)) (car lst))
 
+(define-method (last (lst <list>)) (srfi1:last lst))
+
 (define-method (take (qty <integer>) (lst <list>))
   (srfi1:take lst qty))
 
@@ -193,3 +200,27 @@
 
 (define-method (print . things)
   (format #t "~a\n" (apply str things)))
+
+
+;; Helpers for randomization
+(export prob-sample)
+(define (prob-sample . probability-pairs)
+  (define (cumulative-probas probability-pairs)
+    (let loop ([probability-pairs (filter-out (λ (e) (zero? (car e)))
+                                              probability-pairs)]
+               [rslt '()]
+               [sum 0])
+      (match probability-pairs
+        [() (reverse rslt)]
+        [((prob thing) tail ...)
+         (loop tail
+               (cons (list (+ sum prob) thing) rslt)
+               (+ sum prob))])))
+  (let* ([probas (cumulative-probas probability-pairs)]
+         [value (random:uniform)]
+         [in-rand (Λ < value <>)])
+    (let loop ([probas probas])
+      (match probas
+        [() #f]
+        [(((? in-rand prob) thing) tail ...) thing]
+        [(head tail ...) (loop tail)]))))
