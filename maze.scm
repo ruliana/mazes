@@ -45,10 +45,10 @@
   self)
 
 ;; Aldous Broder
-(def (aldous-broder! (self <grid>))
+(def (aldous-broder! (self <grid>) sample-neighbor)
   (let loop ([unvisited (sub1 (size self))]
              [cell (random-cell self)])
-    (var [neighbor (sample (neighbors cell))]
+    (var [neighbor (sample-neighbor cell)]
       (cond
        [(zero? unvisited) self]
        [(links? neighbor)
@@ -57,42 +57,27 @@
        [else (loop unvisited neighbor)]))))
 
 ;; Wilson's
-(def (wilson! (self <grid>))
-  (var sample-neighbor-vert-north (make-neighbor-sampler 0.8 0.0 0.2 0.0))
-  (var sample-neighbor-vert-south (make-neighbor-sampler 0.0 0.8 0.2 0.0))
-  (var sample-neighbor-horz-north (make-neighbor-sampler 0.2 0.0 0.8 0.0))
-  (var sample-neighbor-horz-south (make-neighbor-sampler 0.0 0.2 0.8 0.0))
-  (var sample-neighbor-horz-middl (make-neighbor-sampler 0.04 0.0 0.48 0.48))
-  (var sample-neighbor-random (make-neighbor-sampler 0.25 0.25 0.25 0.25))
-  (def (sample-neighbor cell)
-    (var [col1? (columner self 3 1)
-          col2? (columner self 3 2)
-          col3? (columner self 3 3)
-          row1? (rowner self 3 1)
-          row1? (rowner self 3 2)
-          row1? (rowner self 3 3)]
-      (cond
-        [(col1? cell) (sample-neighbor-vert-north cell)]
-        [(col2? cell) (sample-neighbor-vert-south cell)]
-        [(col3? cell) (sample-neighbor-random cell)])))
+(def (wilson! (self <grid>) sample-neighbor)
 
   (def (solidify-path unvisited path)
+    (return #f if (empty? path))
     (for (:consecutive cell1 cell2 path)
       (link cell1 cell2)))
 
   (def (carve unvisited)
     (return self if (empty? unvisited))
 
-    (def (build-path path cell)
+    (def (build-path path cell counter)
       (return path unless (member cell unvisited))
+      (return '() if (> counter 10))
       (var [new-cell (sample-neighbor cell)
             remaining (member new-cell path)]
         (if remaining
-            (build-path remaining new-cell)
-            (build-path (cons new-cell path) new-cell))))
+            (build-path remaining new-cell (add1 counter))
+            (build-path (cons new-cell path) new-cell (add1 counter)))))
 
     (var [cell (sample unvisited)
-          path (build-path (list cell) cell)
+          path (build-path (list cell) cell 0)
           unvisited (filter-out (Λ member <> path) unvisited)]
       (solidify-path unvisited path)
       (carve unvisited)))
@@ -100,6 +85,34 @@
   (var [all-cells (cells self)
         unvisited (rest all-cells)]
     (carve unvisited)))
+
+;; Randow walkers for textures in Aldous Broder and Wilson
+(var sample-neighbor-vert-nw (make-neighbor-sampler 0.8 0.0 0.2 0.0))
+(var sample-neighbor-vert-sw (make-neighbor-sampler 0.0 0.8 0.2 0.0))
+(var sample-neighbor-horz-nw (make-neighbor-sampler 0.2 0.0 0.8 0.0))
+(var sample-neighbor-horz-sw (make-neighbor-sampler 0.0 0.2 0.8 0.0))
+(var sample-neighbor-horz-nm (make-neighbor-sampler 0.04 0.0  0.48 0.48))
+(var sample-neighbor-horz-sm (make-neighbor-sampler 0.0  0.04 0.48 0.48))
+(var sample-neighbor-random (make-neighbor-sampler 0.25 0.25 0.25 0.25))
+
+(def (sample-neighbor-multitexture (grid <grid>))
+  (def (sample-neighbor cell)
+    (var [col1? (columner grid 5 1)
+          col2? (columner grid 5 2)
+          col3? (columner grid 5 3)
+          col4? (columner grid 5 4)
+          col5? (columner grid 5 5)
+          row1? (rowner grid 3 1)
+          row2? (rowner grid 3 2)
+          row3? (rowner grid 3 3)]
+      (cond
+        [(col1? cell) (sample-neighbor-vert-nw cell)]
+        [(col2? cell) (sample-neighbor-horz-nm cell)]
+        [(and (row2? cell) (col3? cell)) (sample-neighbor-random cell)]
+        [(col3? cell) (sample-neighbor-horz-nm cell)]
+        [(col4? cell) (sample-neighbor-horz-nm cell)]
+        [(col5? cell) (sample-neighbor-vert-sw cell)])))
+  sample-neighbor)
 
 ;; Breadth First Search
 ;; A "maze solver"
@@ -173,7 +186,7 @@
   (display (->string (algorithm (make <grid> rows: rows cols: cols)))))
 
 (def (display-maze-graph file-name algorithm r c)
-  (display-maze-graph file-name algorithm r c (coord 0 0)))
+  (display-maze-graph file-name algorithm r c (coord 16 32)))
 
 (def (display-maze-graph file-name algorithm r c cell-coord-color-start)
   (var maze (algorithm (make <grid> rows: r cols: c)))
@@ -190,9 +203,15 @@
         (row from) (col from))
   (values grid distance))
 
-(define-values (maze distance) (display-maze-graph "./labyrinth1.svg" wilson! 32 64))
-(define-values (maze distance) (display-maze-graph "./labyrinth2.svg" aldous-broder! 31 31))
-(define-values (maze distance) (display-maze-graph "./labyrinth3.svg" sidewinder! 31 31))
+(define-values (maze distance)
+  (display-maze-graph "./labyrinth1.svg"
+                      (λ (g) (wilson! g (sample-neighbor-multitexture g)))
+                      32 64))
+
+;; (define-values (maze distance)
+;;   (display-maze-graph "./labyrinth2.svg"
+;;                       (λ (g) (aldous-broder! g sample-neighbor-random))
+;;                       32 64))
 
 ;; (def (animation (algorithm <generic>) (rows <integer>) (cols <integer>))
 ;;   (var half-row (/ (- cols 1) 2)
