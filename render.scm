@@ -18,7 +18,6 @@
 (define east  #b0001)
 
 (define* (->svg file-name rows cols cells optional: colors root-row root-col)
-  (define color-list (or colors (circular-list 0)))
   (define width (* cols cell-size))
   (define height (* rows cell-size))
   (define surface (cairo-svg-surface-create width height file-name))
@@ -84,9 +83,10 @@
   (cairo-paint context)
 
   (let ([matrix (cairo-get-matrix context)])
-    ;; Draw grid
-    (draw-grid context fill-square color-list)
+    ;; Fill grid
+    (if colors (draw-grid context fill-square colors))
 
+    ;; Draw grid
     (cairo-set-matrix context matrix)
     (cairo-set-source-rgb context 0 0 0)
     (draw-grid context draw-square cells)

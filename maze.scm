@@ -188,6 +188,14 @@
 (def (display-maze-graph file-name algorithm r c)
   (display-maze-graph file-name algorithm r c (coord 16 32)))
 
+(def (display-maze-graph-bw file-name algorithm r c)
+  (var grid (algorithm (make <grid> rows: r cols: c)))
+  (->svg file-name
+         (rows grid)
+         (cols grid)
+         (map ->bits (cells grid)))
+  (values grid #f))
+
 (def (display-maze-graph file-name algorithm r c cell-coord-color-start)
   (var maze (algorithm (make <grid> rows: r cols: c)))
   (colorize maze file-name cell-coord-color-start))
@@ -204,9 +212,9 @@
   (values grid distance))
 
 (define-values (maze distance)
-  (display-maze-graph "./labyrinth1.svg"
-                      (λ (g) (wilson! g (sample-neighbor-multitexture g)))
-                      32 64))
+  (display-maze-graph-bw "./labyrinth1.svg"
+                         (λ (g) (wilson! g (sample-neighbor-multitexture g)))
+                         21 63))
 
 ;; (define-values (maze distance)
 ;;   (display-maze-graph "./labyrinth2.svg"

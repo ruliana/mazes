@@ -1,3 +1,6 @@
 images/
+test.scm
 *.svg
 *.gif
+*.png
+*.jpg
