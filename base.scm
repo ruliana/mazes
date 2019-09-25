@@ -15,7 +15,8 @@
         row col
         north south west east
         ->bits
-        link link? unlink links links?
+        link link? unlink links
+        no-links? any-link?
         make-neighbor-sampler
         neighbors carve)
 (export <grid>
@@ -86,8 +87,11 @@
 (define-method (links (self <cell>))
   (hash-table-keys (slot-ref self 'links)))
 
-(define-method (links? (self <cell>))
+(define-method (no-links? (self <cell>))
   (empty? (links self)))
+
+(define-method (any-link? (self <cell>))
+  (not (empty? (links self))))
 
 (define-method (neighbors (self <cell>))
   (filter-map (Λ <> self) (list north south west east)))

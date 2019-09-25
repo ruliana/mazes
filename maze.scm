@@ -55,7 +55,7 @@
     (var [neighbor (sample-neighbor cell)]
       (cond
        [(zero? unvisited) self]
-       [(links? neighbor)
+       [(no-links? neighbor)
         (link cell neighbor)
         (loop (sub1 unvisited) neighbor)]
        [else (loop unvisited neighbor)]))))
@@ -119,6 +119,25 @@
         [(col4? cell) (sample-neighbor-horz-nm cell)]
         [(col5? cell) (sample-neighbor-vert-sw cell)])))
   sample-neighbor)
+
+;; Recursive Backtracker
+(def (recursive-backtracker! (self <grid>))
+  (recursive-backtracker! self sample-not-visited))
+
+(def (recursive-backtracker! (self <grid>) sample-not-visited)
+  (def (step cell)
+    (var [next-cell (sample-not-visited cell)]
+      (if next-cell
+          (begin
+            (link cell next-cell)
+            (step next-cell)
+            (step cell))
+        self)))
+  (step (random-cell self)))
+
+(def (sample-not-visited cell)
+  (sample (filter-out any-link? (neighbors cell))))
+
 
 ;; Breadth First Search
 ;; A "maze solver"
@@ -216,12 +235,12 @@
 
 (define-values (maze distance)
   (display-maze-graph "./labyrinth1.svg"
-                      wilson!
+                      recursive-backtracker!
                       32 64))
 
 (define-values (maze distance)
   (display-maze-graph "./labyrinth2.svg"
-                      wilson!
+                      aldous-broder!
                       32 64
                       (coord 16 32)))
 

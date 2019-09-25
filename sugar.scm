@@ -138,6 +138,9 @@
 (define-method (filter-out (f <procedure>) (lst <list>))
   (filter (negate f) lst))
 
+(define-method (filter-out (f <generic>) (lst <list>))
+  (filter (negate f) lst))
+
 (define-generic size)
 (define-method (size (self <list>)) (length self))
 (define-method (size (self <string>)) (string-length self))
