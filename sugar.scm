@@ -8,6 +8,7 @@
 ;; moment. Later, probably, I'll find those comments
 ;; kinda naive.
 (define-module (sugar)
+  #:use-module (oop goops)     ;; Screw OOP, I need function overloading! :D
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-88)  ;; Sane keywords
   #:use-module ((srfi srfi-1)  ;; Great list operators
@@ -16,7 +17,6 @@
                 #:renamer (symbol-prefix-proc (string->symbol "srfi1:")))
   #:use-module (srfi srfi-26)  ;; Cut
   #:use-module (srfi srfi-42)  ;; List comprehension
-  #:use-module (oop goops)     ;; Screw OOP, I need function overloading! :D
   #:duplicates (merge-generics))
 
 (export Λ var)

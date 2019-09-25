@@ -10,7 +10,8 @@
   #:use-module (sugar)
   #:use-module (render)
   #:use-module (random)
-  #:use-module (base))
+  #:use-module (base)
+  #:duplicates (merge-generics warn last))
 
 ;; MAZE ALGORITHMS
 
@@ -57,6 +58,9 @@
        [else (loop unvisited neighbor)]))))
 
 ;; Wilson's
+(def (wilson! (self <grid>))
+     (wilson! self sample-neighbor-random))
+
 (def (wilson! (self <grid>) sample-neighbor)
 
   (def (solidify-path unvisited path)
@@ -186,9 +190,6 @@
   (display (->string (algorithm (make <grid> rows: rows cols: cols)))))
 
 (def (display-maze-graph file-name algorithm r c)
-  (display-maze-graph file-name algorithm r c (coord 16 32)))
-
-(def (display-maze-graph-bw file-name algorithm r c)
   (var grid (algorithm (make <grid> rows: r cols: c)))
   (->svg file-name
          (rows grid)
@@ -212,8 +213,8 @@
   (values grid distance))
 
 (define-values (maze distance)
-  (display-maze-graph-bw "./labyrinth1.svg"
-                         (λ (g) (wilson! g (sample-neighbor-multitexture g)))
+  (display-maze-graph "./labyrinth1.svg"
+                         wilson!
                          21 63))
 
 ;; (define-values (maze distance)

@@ -6,7 +6,8 @@
   #:use-module (srfi srfi-69)  ;; hash-table
   #:use-module (srfi srfi-88)  ;; keywords
   #:use-module (render)
-  #:use-module (sugar))
+  #:use-module (sugar)
+  #:duplicates (merge-generics warn last))
 
 (export <coord>
         coord row col)
@@ -47,7 +48,7 @@
   (south init-value: #f accessor: south)
   (west init-value: #f accessor: west)
   (east init-value: #f accessor: east)
-  (links init-form: (make-hash-table eq?)))
+  (links init-form: (make-hash-table)))
 
 (define-method (coord (self <cell>))
   (coord (row self) (col self)))
