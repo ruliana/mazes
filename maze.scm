@@ -15,6 +15,74 @@
 
 ;; MAZE ALGORITHMS
 
+;; Breadth First Search
+;; A "maze solver"
+;;
+;; It actually computes the distance of every cell
+;; from a root.
+
+(class <distance> ()
+  (content getter: content))
+
+(def (initialize (self <distance>) initargs)
+  (slot-set! self 'content (make-hash-table eq?)))
+
+(def (ref (self <distance>) (cell <cell>))
+  (hash-table-ref/default (content self) cell #f))
+
+(def (set (self <distance>) (cell <cell>) (distance <number>))
+  (hash-table-set! (content self) cell distance))
+
+(def (longest (self <distance>))
+  (apply max (hash-table-values (content self))))
+
+(def (path (self <distance>))
+  (map left
+    (sort (hash-table->alist (content self))
+          (λ (a b) (< (right a) (right b))))))
+
+(def (distances (grid <grid>) (source <coord>))
+  (var root (ref grid source)
+       distance (make <distance>)
+       frontier (enq! (make-q) root))
+  (def (head-visited? lst) (ref distance (1st lst)))
+  (def (visit cell)
+    (visit-neighbors (links cell) (ref distance cell)))
+  (def (visit-neighbors neighs dist)
+    (match neighs
+      [() #f]
+      [(? head-visited? (head tail ...))
+       (visit-neighbors tail dist)]
+      [(head tail ...)
+       (set distance head (1+ dist))
+       (enq! frontier head)
+       (visit-neighbors tail dist)]))
+
+  (set distance root 0)
+  (do ()
+      [(q-empty? frontier) distance]
+      (visit (deq! frontier)))
+  distance)
+
+(def (shortest-path (grid <grid>) (source-coord <coord>) (target-coord <coord>))
+  (var distance (distances grid source-coord)
+       path (make <distance>)
+       source (ref grid source-coord)
+       target (ref grid target-coord))
+  (set path target (ref distance target))
+  (let loop ([current target])
+    (if (eq? current source) path
+        (var [current-distance (ref distance current)
+              follow (filter (λ (e) (< (right e) current-distance))
+                             (map (λ (e) (pair e (ref distance e)))
+                                  (links current)))]
+          (match follow
+            [() path]
+            [((next . dist) . _)
+             (set path next dist)
+             (loop next)])))))
+
+
 ;; Binary tree
 
 (def (binary-tree! (self <grid>))
@@ -137,74 +205,6 @@
 
 (def (sample-not-visited cell)
   (sample (filter-out any-link? (neighbors cell))))
-
-
-;; Breadth First Search
-;; A "maze solver"
-;;
-;; It actually computes the distance of every cell
-;; from a root.
-
-(class <distance> ()
-  (content getter: content))
-
-(def (initialize (self <distance>) initargs)
-  (slot-set! self 'content (make-hash-table eq?)))
-
-(def (ref (self <distance>) (cell <cell>))
-  (hash-table-ref/default (content self) cell #f))
-
-(def (set (self <distance>) (cell <cell>) (distance <number>))
-  (hash-table-set! (content self) cell distance))
-
-(def (longest (self <distance>))
-  (apply max (hash-table-values (content self))))
-
-(def (path (self <distance>))
-  (map left
-    (sort (hash-table->alist (content self))
-          (λ (a b) (< (right a) (right b))))))
-
-(def (distances (grid <grid>) (source <coord>))
-  (var root (ref grid source)
-       distance (make <distance>)
-       frontier (enq! (make-q) root))
-  (def (head-visited? lst) (ref distance (1st lst)))
-  (def (visit cell)
-    (visit-neighbors (links cell) (ref distance cell)))
-  (def (visit-neighbors neighs dist)
-    (match neighs
-      [() #f]
-      [(? head-visited? (head tail ...))
-       (visit-neighbors tail dist)]
-      [(head tail ...)
-       (set distance head (1+ dist))
-       (enq! frontier head)
-       (visit-neighbors tail dist)]))
-
-  (set distance root 0)
-  (do ()
-      [(q-empty? frontier) distance]
-      (visit (deq! frontier)))
-  distance)
-
-(def (shortest-path (grid <grid>) (source-coord <coord>) (target-coord <coord>))
-  (var distance (distances grid source-coord)
-       path (make <distance>)
-       source (ref grid source-coord)
-       target (ref grid target-coord))
-  (set path target (ref distance target))
-  (let loop ([current target])
-    (if (eq? current source) path
-        (var [current-distance (ref distance current)
-              follow (filter (λ (e) (< (right e) current-distance))
-                             (map (λ (e) (pair e (ref distance e)))
-                                  (links current)))]
-          (match follow
-            [() path]
-            [((next . dist) . _)
-             (set path next dist)
-             (loop next)])))))
 
 ;; Display maze
 (def (display-maze-ascii algorithm rows cols)
