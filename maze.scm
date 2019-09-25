@@ -194,17 +194,16 @@
 
 (def (recursive-backtracker! (self <grid>) sample-not-visited)
   (def (step cell)
-    (var [next-cell (sample-not-visited cell)]
-      (if next-cell
-          (begin
-            (link cell next-cell)
-            (step next-cell)
-            (step cell))
-        self)))
+    (match (sample-not-visited cell)
+      [#f self]
+      [next-cell (link cell next-cell)
+                 (step next-cell)
+                 (step cell)]))
   (step (random-cell self)))
 
 (def (sample-not-visited cell)
   (sample (filter-out any-link? (neighbors cell))))
+
 
 ;; Display maze
 (def (display-maze-ascii algorithm rows cols)
