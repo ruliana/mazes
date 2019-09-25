@@ -46,6 +46,9 @@
   self)
 
 ;; Aldous Broder
+(def (aldous-broder! (self <grid>))
+  (aldous-broder! self sample-neighbor-random))
+
 (def (aldous-broder! (self <grid>) sample-neighbor)
   (let loop ([unvisited (sub1 (size self))]
              [cell (random-cell self)])
@@ -71,17 +74,16 @@
   (def (carve unvisited)
     (return self if (empty? unvisited))
 
-    (def (build-path path cell counter)
+    (def (build-path path cell)
       (return path unless (member cell unvisited))
-      (return '() if (> counter 10))
       (var [new-cell (sample-neighbor cell)
             remaining (member new-cell path)]
         (if remaining
-            (build-path remaining new-cell (add1 counter))
-            (build-path (cons new-cell path) new-cell (add1 counter)))))
+            (build-path remaining new-cell)
+            (build-path (cons new-cell path) new-cell))))
 
     (var [cell (sample unvisited)
-          path (build-path (list cell) cell 0)
+          path (build-path (list cell) cell)
           unvisited (filter-out (Λ member <> path) unvisited)]
       (solidify-path unvisited path)
       (carve unvisited)))
@@ -214,8 +216,8 @@
 
 (define-values (maze distance)
   (display-maze-graph "./labyrinth1.svg"
-                         wilson!
-                         21 63))
+                      sidewinder!
+                      21 63))
 
 ;; (define-values (maze distance)
 ;;   (display-maze-graph "./labyrinth2.svg"

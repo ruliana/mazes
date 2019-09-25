@@ -48,7 +48,7 @@
   (south init-value: #f accessor: south)
   (west init-value: #f accessor: west)
   (east init-value: #f accessor: east)
-  (links init-form: (make-hash-table)))
+  (links init-form: (make-hash-table eq?)))
 
 (define-method (coord (self <cell>))
   (coord (row self) (col self)))
