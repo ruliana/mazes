@@ -120,7 +120,7 @@
 
 (define-method (empty? (lst <list>)) (null? lst))
 
-(define-method (rest (lst <list>)) (cdr lst))
+(define-method (rest (lst <list>)) (if (empty? lst) '() (cdr lst)))
 
 (define-method (first (lst <list>)) (car lst))
 
