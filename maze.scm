@@ -216,8 +216,15 @@
 
 (define-values (maze distance)
   (display-maze-graph "./labyrinth1.svg"
-                      sidewinder!
-                      21 63))
+                      wilson!
+                      32 64))
+
+(define-values (maze distance)
+  (display-maze-graph "./labyrinth2.svg"
+                      wilson!
+                      32 64
+                      (coord 16 32)))
+
 
 ;; (define-values (maze distance)
 ;;   (display-maze-graph "./labyrinth2.svg"
