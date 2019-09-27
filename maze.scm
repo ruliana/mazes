@@ -11,7 +11,7 @@
   #:use-module (render)
   #:use-module (random)
   #:use-module (base)
-  #:duplicates (merge-generics warn last))
+  #:duplicates (merge-generics last))
 
 ;; MAZE ALGORITHMS
 
@@ -214,7 +214,7 @@
   (->svg file-name
          (rows grid)
          (cols grid)
-         (map ->bits (cells grid)))
+         (vector->list (map ->bits (cells grid))))
   (values grid #f))
 
 (def (display-maze-graph file-name algorithm r c cell-coord-color-start)
@@ -227,8 +227,8 @@
   (->svg file-name
         (rows grid)
         (cols grid)
-        (map ->bits (cells grid))
-        (map (λ (e) (- 1 (/ (or (ref distance e) max-distance) max-distance))) (cells grid))
+        (vector->list (map ->bits (cells grid)))
+        (vector->list (map (λ (e) (- 1 (/ (or (ref distance e) max-distance) max-distance))) (cells grid)))
         (row from) (col from))
   (values grid distance))
 

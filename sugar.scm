@@ -17,7 +17,8 @@
                 #:renamer (symbol-prefix-proc (string->symbol "srfi1:")))
   #:use-module (srfi srfi-26)  ;; Cut
   #:use-module (srfi srfi-42)  ;; List comprehension
-  #:duplicates (merge-generics))
+  #:use-module (srfi srfi-43)  ;; Vector stuff
+  #:duplicates (merge-generics last))
 
 (export Λ var)
 (export empty? rest
@@ -26,6 +27,7 @@
         first last
         zip
         take drop
+        map
         filter-map
         filter-out
         size)
@@ -36,23 +38,11 @@
 ;; in the 80s anymore, are we?
 (define-syntax Λ (identifier-syntax cut))
 
-(define 1st srfi1:first)
-(define 2nd srfi1:second)
-(define 3rd srfi1:third)
-(define 4th srfi1:fourth)
-(define 5th srfi1:fifth)
-
-(define zip srfi1:zip)
-
-;; For using with pairs
-(define pair cons)
-(define left car)
-(define right cdr)
-
 
 ;; List comprehension with sane names
 (export for
-        lst
+        for-list
+        for-vector
         :consecutive)
 (re-export :
            :range
@@ -60,7 +50,8 @@
            :parallel)
 
 (define-syntax for (identifier-syntax do-ec))
-(define-syntax lst (identifier-syntax list-ec))
+(define-syntax for-list (identifier-syntax list-ec))
+(define-syntax for-vector (identifier-syntax vector-ec))
 
 (define-syntax :consecutive
   (syntax-rules ()
@@ -110,40 +101,84 @@
 
 
 
-;; SRFI-1
+;; Unifying SRFI-1, SRFI-43 (and probably others later)
 ;; But with a sane parameter order and more intention
 ;; revealing names.
 ;;
-;; Also, use function overloading, so we can apply
-;; the same thing to vectors, hashtables, streams
-;; strings and other collection like types.
+;; Missing:
+;; - Hashtable
+;; - Stream
+;; - Arrays
+;; - Sets
+
+(define 1st srfi1:first)
+(define 2nd srfi1:second)
+(define 3rd srfi1:third)
+(define 4th srfi1:fourth)
+(define 5th srfi1:fifth)
+
+(define zip srfi1:zip)
+
+;; For using with pairs
+(define pair cons)
+(define left car)
+(define right cdr)
 
 (define-method (empty? (lst <list>)) (null? lst))
+(define-method (empty? (vec <vector>)) (vector-empty? vec))
 
 (define-method (rest (lst <list>)) (if (empty? lst) '() (cdr lst)))
+(define-method (rest (vec <vector>)) (if (empty? vec) '#()
+                                         (vector-copy vec 1)))
 
 (define-method (first (lst <list>)) (car lst))
+(define-method (first (vec <vector>)) (vector-ref vec 0))
 
 (define-method (last (lst <list>)) (srfi1:last lst))
+(define-method (last (vec <vector>)) (vector-ref vec (sub1 (size vec))))
 
 (define-method (take (qty <integer>) (lst <list>))
   (srfi1:take lst qty))
+(define-method (take (qty <integer>) (vec <vector>))
+  (vector-copy vec 0 (min qty (size vec))))
 
 (define-method (drop (qty <integer>) (lst <list>))
   (srfi1:drop lst qty))
+(define-method (drop (qty <integer>) (vec <vector>))
+  (vector-copy vec (min qty (size vec))))
+
+
+(define-generic map)
+
+(define-method (map (f <procedure>) (lst <list>))
+  (map f lst))
+(define-method (map (f <generic>) (lst <list>))
+  (map f lst))
+
+(define-method (map (f <procedure>) (vec <vector>))
+  (vector-map (λ (i e) (f e)) vec))
+(define-method (map (f <generic>) (vec <vector>))
+  (vector-map (λ (i e) (f e)) vec))
+
 
 (define-method (filter-map (f <procedure>) (lst <list>))
   (srfi1:filter-map f lst))
 
 (define-method (filter-out (f <procedure>) (lst <list>))
   (filter (negate f) lst))
-
 (define-method (filter-out (f <generic>) (lst <list>))
   (filter (negate f) lst))
 
 (define-generic size)
-(define-method (size (self <list>)) (length self))
-(define-method (size (self <string>)) (string-length self))
+(define-method (size (lst <list>)) (length lst))
+(define-method (size (str <string>)) (string-length str))
+(define-method (size (vec <vector>)) (vector-length vec))
+
+;; Conversion
+(define-method (->list (lst <list>)) lst)
+(define-method (->list (str <string>)) (string->list str))
+(define-method (->list (vec <vector>)) (vector->list vec))
+
 
 
 ;; Simplified let

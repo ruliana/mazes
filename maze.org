@@ -1,3 +1,41 @@
 * Improvements
-** TODO On <grid>, replace the list for a vector
+** DONE On <grid>, replace the list for a vector
+   CLOSED: [2019-09-26 Thu 23:03]
 ** TODO On <grid>, use a persistent collection instead a mutable one
+* TODO Generics for collections
+** Collections
+*** List
+*** Vector
+*** String
+*** Hashtable
+*** Stream
+*** Array
+*** Set
+** Collection as a procedure
+*** How GOOPS differentiate ~accessor~, ~generic~ and ~procedure~?
+**** We can use exact the same trick
+** Selectors
+*** 1st, 2nd, 3rd, 4th, 5th... 9th
+*** first, last
+*** take, drop
+**** with negative numbers doing in reverse
+*** split, chunk
+*** take-while, drop-while
+** Loops
+*** flat-map
+*** map
+*** filter-map
+*** filter
+*** filter-out
+** List comprehension
+*** for
+*** for-list
+*** for-vector
+*** for-string
+*** for-dict
+*** for-stream
+*** for-array
+*** for-set
+** Miscellaneous
+*** flatten
+**** with level, default all

@@ -1,4 +1,5 @@
 ;; Basic maze objects to be used in the algorithms
+(add-to-load-path "./")
 (define-module (base)
   #:use-module (oop goops)
   #:use-module (ice-9 match)
@@ -7,7 +8,7 @@
   #:use-module (srfi srfi-88)  ;; keywords
   #:use-module (render)
   #:use-module (sugar)
-  #:duplicates (merge-generics warn last))
+  #:duplicates (merge-generics last))
 
 (export <coord>
         coord row col)
@@ -140,6 +141,7 @@
    [(pass             west east) "═"]
    [else " "]))
 
+
 ;; Grid
 
 (define-class <grid> ()
@@ -151,9 +153,9 @@
   (define pos (Λ ref self <> <>))
 
   (define (create-grid)
-    (lst (: r (rows self))
-         (: c (cols self))
-         (make <cell> row: r col: c)))
+    (for-vector (: r (rows self))
+                (: c (cols self))
+                (make <cell> row: r col: c)))
 
   (define (connect-neighbors cell)
     (define row (slot-ref cell 'row))
@@ -172,7 +174,7 @@
            (< -1 col (cols self)))
       (let ([g (slot-ref self 'grid)]
             [index (+ col (* row (cols self)))])
-        (list-ref g index))
+        (vector-ref g index))
       #f))
 
 (define-method (ref (self <grid>) (coord <coord>))
