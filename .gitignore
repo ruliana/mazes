@@ -5,3 +5,4 @@ test.scm
 *.gif
 *.png
 *.jpg
+**/*.log
