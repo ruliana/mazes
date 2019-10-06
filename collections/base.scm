@@ -16,6 +16,7 @@
 ;; vector - ordered, indexed, finite
 ;; dict - unordered, indexed, finite
 ;; string - ordered, indexed, finite
+;; queue (TODO) - ordered, unindexed, finite
 ;; stream (TODO) - ordered, indexed, infinite
 ;; array (TODO) - ordered, indexed, finite
 ;; set (TODO) - unordered, unindexed, finite
@@ -202,7 +203,8 @@
         for-every?
         for-first
         for-last
-        for-fold)
+        for-fold
+        :consecutive)
 
 (define-syntax for (identifier-syntax do-ec))
 (define-syntax for-list (identifier-syntax list-ec))
@@ -229,3 +231,21 @@
      (last-ec #f (gen ...) rest ...)]
     [(_ rest ...)
      (last-ec rest ...)]))
+
+(define-syntax :consecutive
+  (syntax-rules ()
+    [(_ cc v1 v2 coll)
+     (:parallel cc
+                (: v1 coll)
+                (: v2 (tail coll)))]
+    [(_ cc v1 v2 v3 coll)
+     (:parallel cc
+                (: v1 coll)
+                (: v2 (tail coll))
+                (: v3 (tail (tail coll))))]
+    [(_ cc v1 v2 v3 v4 coll)
+     (:parallel cc
+                (: v1 coll)
+                (: v2 (tail coll))
+                (: v3 (tail (tail coll)))
+                (: v4 (tail (tail (tail coll)))))]))

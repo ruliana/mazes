@@ -213,3 +213,9 @@
 (test-equal '(3 2 1) (for-fold '() (: a 1 4) a cons))
 (test-equal 6 (for-fold 0 (: a 1 4) a +))
 (test-end)
+
+(test-begin "list-comprehension-consecutive")
+(test-equal '((1 2) (2 3) (3 4)) (for-list (:consecutive v1 v2 '(1 2 3 4)) (list v1 v2)))
+(test-equal '((1 2 3) (2 3 4)) (for-list (:consecutive v1 v2 v3 '(1 2 3 4)) (list v1 v2 v3)))
+(test-equal '((1 2 3 4)) (for-list (:consecutive v1 v2 v3 v4 '(1 2 3 4)) (list v1 v2 v3 v4)))
+(test-end)
