@@ -12,13 +12,15 @@
   duplicates: (merge-generics last))
 
 ;; Collections:
-;; list
-;; vector
-;; dict
-;; string
-;; stream (TODO)
-;; array (TODO)
+;; list - ordered, indexed, finite
+;; vector - ordered, indexed, finite
+;; dict - unordered, indexed, finite
+;; string - ordered, indexed, finite
+;; stream (TODO) - ordered, indexed, infinite
+;; array (TODO) - ordered, indexed, finite
+;; set (TODO) - unordered, unindexed, finite
 ;; set and update (TODO)
+;; ordered dict and set (TODO)
 
 (export <dict> dict)
 
@@ -186,6 +188,7 @@
            :while
            :until
            :dispatched
+           :generator-proc
            dispatch-union)
 (export for
         for-list
@@ -211,6 +214,18 @@
 (define-syntax for-max (identifier-syntax max-ec))
 (define-syntax for-any? (identifier-syntax any?-ec))
 (define-syntax for-every? (identifier-syntax every?-ec))
-(define-syntax for-first (identifier-syntax first-ec))
-(define-syntax for-last (identifier-syntax last-ec))
 (define-syntax for-fold (identifier-syntax fold-ec))
+
+(define-syntax for-first
+  (syntax-rules ()
+    [(_ (gen ...) rest ...)
+     (first-ec #f (gen ...) rest ...)]
+    [(_ rest ...)
+     (first-ec rest ...)]))
+
+(define-syntax for-last
+  (syntax-rules ()
+    [(_ (gen ...) rest ...)
+     (last-ec #f (gen ...) rest ...)]
+    [(_ rest ...)
+     (last-ec rest ...)]))
