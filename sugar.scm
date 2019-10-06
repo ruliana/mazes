@@ -20,7 +20,6 @@
   #:use-module (srfi srfi-43)  ;; Vector stuff
   #:duplicates (merge-generics last))
 
-(export Λ var)
 (export empty? rest
         pair left right
         1st 2nd 3rd 4th 5th
@@ -31,13 +30,6 @@
         filter-map
         filter-out
         size)
-
-;; Upper lambda as an alias for "cut".
-;;
-;; I'd rather use λ than "lambda". We not
-;; in the 80s anymore, are we?
-(define-syntax Λ (identifier-syntax cut))
-
 
 ;; List comprehension with sane names
 (export for
@@ -64,40 +56,6 @@
                (: v1 coll)
                (: v2 (rest coll))
                (: v3 (rest (rest coll))))]))
-
-;; GOOPS as default way to do things
-;;
-;; That means names that are shorter, more common
-;; in other languages, and maybe some extra default
-;; definitions.
-(export class
-        def)
-(re-export make
-           define-generic
-           slot-ref slot-set!
-           initialize
-           <procedure> <accessor> <method> <generic>
-           <object> <class>
-           <real> <number> <integer>
-           <string> <list>)
-
-(define-syntax class (identifier-syntax define-class))
-
-(define-syntax prepare-if
-  (syntax-rules (return if unless)
-    [(_ (return this if that) body ...)
-     (if that this (prepare-if body ...))]
-    [(_ (return this unless that) body ...)
-     (if that (prepare-if body ...) this)]
-    [(_ body ...)
-     (begin body ...)]))
-
-(define-syntax def
-  (syntax-rules (return if)
-    [(_ (definition ...)
-        body ...)
-     (define-method (definition ...)
-       (prepare-if body ...))]))
 
 
 
@@ -178,7 +136,6 @@
 (define-method (->list (lst <list>)) lst)
 (define-method (->list (str <string>)) (string->list str))
 (define-method (->list (vec <vector>)) (vector->list vec))
-
 
 
 ;; Simplified let
