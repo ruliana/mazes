@@ -1,18 +1,22 @@
-(add-to-load-path "./")
 (define-module (maze)
-  #:use-module (oop goops)
-  #:use-module (ice-9 optargs)
   #:use-module (ice-9 match)
   #:use-module (ice-9 q)
   #:use-module (ice-9 format)
-  #:use-module (srfi srfi-88) ;; keywords
   #:use-module (srfi srfi-69) ;; hashtable
-  #:use-module (syntax base)
-  #:use-module (collections base)
   #:use-module (render)
   #:use-module (random)
   #:use-module (base)
+  #:use-module (syntax base)
+  #:use-module (collections base)
   #:duplicates (merge-generics last))
+
+(export display-maze-ascii
+        display-maze-graph
+        binary-tree!
+        sidewinder!
+        aldous-broder!
+        wilson!
+        recursive-backtracker!)
 
 ;; MAZE ALGORITHMS
 
@@ -102,8 +106,8 @@
 (def (sidewinder! (self <grid>) (horizontal-probability <real>))
   (def (carve-row row run)
     (return #f if (empty? row))
-    (var [cell (car row)
-          rest (cdr row)]
+    (var [cell (head row)
+          rest (tail row)]
       (cond
        [(and (east cell) (chance horizontal-probability))
         (carve-row rest (cons (carve east cell) run))]
@@ -158,7 +162,7 @@
       (carve unvisited)))
 
   (var [all-cells (cells self)
-        unvisited (rest all-cells)]
+        unvisited (tail all-cells)]
     (carve unvisited)))
 
 ;; Randow walkers for textures in Aldous Broder and Wilson
@@ -233,16 +237,23 @@
         (row from) (col from))
   (values grid distance))
 
-(define-values (maze distance)
-  (display-maze-graph "./labyrinth1.svg"
-                      recursive-backtracker!
-                      32 64))
+(var test (make <grid> rows: 5 cols: 5))
+(for-each (λ (e) (carve north e)) test)
+(for (: c (index i) (cells test))
+  (var [connections (for-list (: e (links c)) (format #f "~ax~a" (row e) (col e)))]
+    (print i " " (row c) "x" (col c) " " (show c) " " connections)))
+(format #t "~a\n" (->string test))
 
-(define-values (maze distance)
-  (display-maze-graph "./labyrinth2.svg"
-                      aldous-broder!
-                      32 64
-                      (coord 16 32)))
+;; (define-values (maze distance)
+;;   (display-maze-graph "./labyrinth1.svg"
+;;                       recursive-backtracker!
+;;                       32 64))
+
+;; (define-values (maze distance)
+;;   (display-maze-graph "./labyrinth2.svg"
+;;                       aldous-broder!
+;;                       32 64
+;;                       (coord 16 32)))
 
 
 ;; (define-values (maze distance)

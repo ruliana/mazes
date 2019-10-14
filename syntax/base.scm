@@ -136,6 +136,6 @@
 ;; Printing and str formating
 (export print)
 (define* (print . args)
-  (format #t "~a\n" args))
+  (apply format #t (string-append (apply string-append (make-list (length args) "~a")) "\n") args))
 
 (re-export (string-append . str))

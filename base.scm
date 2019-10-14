@@ -1,11 +1,12 @@
 ;; Basic maze objects to be used in the algorithms
 (add-to-load-path "./")
 (define-module (base)
-  #:use-module (syntax base)
-  #:use-module (collections base)
-  #:use-module (ice-9 match)
-  #:use-module (render)
-  #:duplicates (merge-generics last))
+  use-module: (syntax base)
+  use-module: (collections base)
+  use-module: (ice-9 match)
+  use-module: (random)
+  use-module: (render)
+  duplicates: (merge-generics last))
 
 (export <coord>
         coord row col)
@@ -24,7 +25,6 @@
         size
         ->string
         for-each for-each-row
-        display-maze-ascii display-maze-graph
         columner rowner)
 (export display write show str)
 (export exclude-cells)
@@ -93,7 +93,7 @@
 
 (def (neighbors (self <cell>))
   (for-list (: dir (list north south west east))
-            (:let neigh (ref dir self))
+            (:let neigh (dir self))
             (if neigh)
             neigh))
 
@@ -190,10 +190,13 @@
      (cols self)))
 
 (define-generic for-each)
-(def (for-each (proc <procedure>) (self <grid>))
+(def (for-each (proc <applicable>) (self <grid>))
   (for-each proc (cells self)))
 
-(def (for-each-row (proc <procedure>) (self <grid>))
+(def (for-each (proc <applicable>) (self <vector>))
+  (for (: cell self) (proc cell)))
+
+(def (for-each-row (proc <applicable>) (self <grid>))
   (let loop ([rows (cells self)])
     (if (not (empty? rows))
         (begin
@@ -202,7 +205,7 @@
 
 (def (->string (self <grid>))
   (define glyphs (map show (cells self)))
-  (let loop ([lst glyphs]
+  (let loop ([lst (vector->list glyphs)]
              [counter 1]
              [rslt '()])
     (cond

@@ -32,6 +32,12 @@
   (string-append a b (number->string c) arg1 arg2))
 (test-equal "aaa12ab" (optional-syntax "aaa" "1" 2))
 (test-equal "aaa23cccddd" (optional-syntax "aaa" "2" 3 arg1: "ccc" arg2: "ddd"))
+
+(def (outer-def a <integer>)
+  (def (inner-def b)
+    (add1 b))
+  (inner-def (add1 a)))
+(test-equal 3 (outer-def 1))
 (test-end)
 
 (test-begin "var")

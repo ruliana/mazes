@@ -337,6 +337,7 @@
 
 
 ;; Other utilities
+;; TODO missing tests
 (export cumulative-sum)
 (def (cumulative-sum lst <list>)
   (let loop ([rslt '()]
