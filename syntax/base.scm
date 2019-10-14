@@ -1,24 +1,26 @@
 (define-module (syntax base)
   use-module: (ice-9 match)
   use-module: (ice-9 optargs)
-  use-module: (oop goops)     ;; Screw OOP, I need function overloading! :D
   use-module: (srfi srfi-71)  ;; Multivalued let
   use-module: (srfi srfi-88)  ;; Sane keywords
   use-module: (srfi srfi-26)  ;; Cut
+  use-module: (oop goops)     ;; Screw OOP, I need function overloading! :D
   duplicates: (merge-generics last))
 
 (re-export make
-           define-class
+           (class . raw-class)
+           (define-class . class)
            define-generic
            slot-ref slot-set!
            initialize
+           equal? eqv? =
            ;; Introspection
            class-of
            class-name
            class-direct-supers
            ;; Base hierarchy
            <applicable-struct> <applicable-struct-class>
-           <procedure> <accessor> <method> <generic>
+           <procedure> <accessor> <method> <generic> <applicable>
            <object> <class>
            <top>
            <real> <number> <integer>
@@ -123,5 +125,17 @@
 ;; Upper lambda as an alias for "cut".
 ;;
 ;; I'd rather use λ than "lambda", too.
-(export Λ)
-(define-syntax Λ (identifier-syntax cut))
+(re-export (cut . Λ))
+
+
+;; Minor utilities
+(re-export (1+ . add1)
+           (1- . sub1))
+
+
+;; Printing and str formating
+(export print)
+(define* (print . args)
+  (format #t "~a\n" args))
+
+(re-export (string-append . str))

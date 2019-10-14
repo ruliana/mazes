@@ -32,23 +32,28 @@
   (string-append a b (number->string c) arg1 arg2))
 (test-equal "aaa12ab" (optional-syntax "aaa" "1" 2))
 (test-equal "aaa23cccddd" (optional-syntax "aaa" "2" 3 arg1: "ccc" arg2: "ddd"))
-
 (test-end)
-
 
 (test-begin "var")
 (var [a 1] (test-equal 1 a))
-
 (var [a (- 2 1) b 2]
   (test-equal 1 a)
   (test-equal 2 b))
-
 (var [x 9])
 (test-equal 9 x)
 (test-end)
 
-
 (test-begin "cut")
 (let [(x (Λ + <> 2))] (test-equal 3 (x 1)))
 (let [(x (Λ + <> <>))] (test-equal 5 (x 2 3)))
+(test-end)
+
+(test-begin "add1")
+(test-equal 2 (add1 1))
+(test-equal 3 (add1 2))
+(test-end)
+
+(test-begin "sub1")
+(test-equal 2 (sub1 3))
+(test-equal 3 (sub1 4))
 (test-end)

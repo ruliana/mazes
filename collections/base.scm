@@ -9,6 +9,7 @@
   use-module: (srfi srfi-42)  ;; List comprehension
   use-module: (srfi srfi-43)  ;; Vector stuff
   use-module: (srfi srfi-69)  ;; Hashtable stuff
+  use-module: (srfi srfi-71)  ;; Extended let
   duplicates: (merge-generics last))
 
 ;; Collections:
@@ -23,17 +24,50 @@
 ;; set and update (TODO)
 ;; ordered dict and set (TODO)
 
+(re-export (cons . pair)
+           (car . left)
+           (cdr . right))
+
+
+;; Hash table lacks a lot of features of modern
+;; dictionaries, like insertion order and equality.
+;; We are going to need a better implementation.
 (export <dict> dict)
 
 ;; For some reason the hash-table class from srfi-69 is not defined here.
 (define <dict> (var [hsh (make-hash-table)] (class-of hsh)))
 
-(define* (dict key: (equal equal?) (hash hash) rest: args)
-  (let loop ([rslt (make-hash-table equal hash)]
+(define (dict . args)
+  (let loop ([rslt (make-hash-table equal?)]
              [args args])
     (match args
       ['() rslt]
-      [(k v rest ...) (hash-table-set! rslt k v) (loop rslt rest)])))
+      [(k v rest ...) (loop (put! k v rslt) rest)])))
+
+;; Why can't I define a generic equal?
+;;(export equal?)
+;; (def (equal? (a <dict>) (b <dict>))
+;;   (return #f unless (= (size a) (size b)))
+;;   (every?-ec (: k (keys a))
+;;              (equal? (ref k a) (ref k b))))
+
+(export keys)
+(def (keys (dic <dict>))
+  (hash-table-keys dic))
+
+;; I'd like to use "values", but the name is already taken
+;; by a more essential building block in scheme.
+(export vals)
+(def (vals (dic <dict>))
+  (hash-table-values dic))
+
+(export key?)
+(def (key? k (dic <dict>))
+  (hash-table-exists? dic k))
+
+(export delete!)
+(def (delete! k (dic <dict>))
+  (hash-table-delete! dic k))
 
 (export size)
 (def (size (lst <list>)) (length lst))
@@ -66,6 +100,16 @@
   (if (< k (size str))
       (substring str k (+ k 1))
       default))
+
+;; Let's not mess with "set!" for now.
+(export put!)
+(def (put! (k <top>) (v <top>) (dic <dict>))
+  (hash-table-set! dic k v)
+  dic)
+
+(def (put! (k <integer>) (v <top>) (vec <vector>))
+  (vector-set! vec k v)
+  vec)
 
 (export 1st)
 (def (1st collection) (ref 0 collection))
@@ -184,39 +228,28 @@
            :char-range
            :port
            :parallel
+           (:parallel . :par)
            :do
            :let
            :while
            :until
            :dispatched
            :generator-proc
+           (do-ec . for)
+           (list-ec . for-list)
+           (vector-ec . for-vector)
+           (string-append-ec . for-string)
+           (sum-ec . for-sum)
+           (product-ec . for-product)
+           (min-ec . for-min)
+           (max-ec . for-max)
+           (any?-ec . for-any?)
+           (every?-ec . for-all?)
+           (fold-ec . for-fold)
            dispatch-union)
-(export for
-        for-list
-        for-vector
-        for-string
-        for-sum
-        for-product
-        for-min
-        for-max
-        for-any?
-        for-every?
-        for-first
+(export for-first
         for-last
-        for-fold
         :consecutive)
-
-(define-syntax for (identifier-syntax do-ec))
-(define-syntax for-list (identifier-syntax list-ec))
-(define-syntax for-vector (identifier-syntax vector-ec))
-(define-syntax for-string (identifier-syntax string-append-ec))
-(define-syntax for-sum (identifier-syntax sum-ec))
-(define-syntax for-product (identifier-syntax product-ec))
-(define-syntax for-min (identifier-syntax min-ec))
-(define-syntax for-max (identifier-syntax max-ec))
-(define-syntax for-any? (identifier-syntax any?-ec))
-(define-syntax for-every? (identifier-syntax every?-ec))
-(define-syntax for-fold (identifier-syntax fold-ec))
 
 (define-syntax for-first
   (syntax-rules ()
@@ -249,3 +282,68 @@
                 (: v2 (tail coll))
                 (: v3 (tail (tail coll)))
                 (: v4 (tail (tail (tail coll)))))]))
+
+
+(export flat-map
+        (generic-map . map)
+        (generic-filter . filter)
+        (generic-filter-out . filter-out)
+        (generic-filter-map . filter-map))
+
+(def (generic-map f <applicable> lst <list>)
+  (map f lst))
+(def (generic-map f <applicable> lst1 <list> lst2 <list>)
+  (map f lst1 lst2))
+
+(def (generic-map f <applicable> vec <vector>)
+  (vector-map (λ (i e) (f e)) vec))
+(def (generic-map f <applicable> vec1 <vector> vec2 <vector>)
+  (vector-map (λ (i e1 e2) (f e1 e2)) vec1 vec2))
+
+(def (generic-map f <applicable> dic <dict>)
+  (define (acc k v rslt)
+    (let ([nk nv (f k v)])
+      (put! nk nv rslt)
+      rslt))
+  ;; TODO copy "equal?" and "hash" from the source dict
+  (hash-table-fold dic acc (dict)))
+
+
+(def (generic-map f <applicable> coll <string>)
+  (apply str (map f (map string (string->list coll)))))
+(def (generic-map f <applicable> str1 <string> str2 <string>)
+  (apply str (map f (map string (string->list str1)) (map string (string->list str2)))))
+
+
+(def (generic-filter f <applicable> lst <list>)
+  (filter f lst))
+
+(def (generic-filter f <applicable> vec <vector>)
+  (list->vector (filter f (vector->list vec))))
+
+
+(def (generic-filter-out f <applicable> lst <list>)
+  (filter (negate f) lst))
+
+(def (generic-filter-out f <applicable> vec <vector>)
+  (list->vector (filter (negate f) (vector->list vec))))
+
+
+(def (generic-filter-map f <applicable> lst <list>)
+  (filter identity (map f lst)))
+
+(def (generic-filter-map f <applicable> vec <vector>)
+  (list->vector (filter identity (map f (vector->list vec)))))
+
+
+;; Other utilities
+(export cumulative-sum)
+(def (cumulative-sum lst <list>)
+  (let loop ([rslt '()]
+             [current 0]
+             [lst lst])
+    (match lst
+      [() (reverse rslt)]
+      [(a rest ...) (loop (cons (+ a current) rslt)
+                          (+ a current)
+                          (cdr lst))])))

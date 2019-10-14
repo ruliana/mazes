@@ -1,7 +1,12 @@
 (define-module (syntax base-test)
+  use-module: (srfi srfi-64) ;; Tests
   use-module: (syntax base)
   use-module: (collections base)
-  use-module: (srfi srfi-64)) ;; Tests
+  duplicates: (merge-generics last))
+
+(test-begin "dict-keys")
+(test-equal '(a: b:) (keys (dict a: 1 b: 2)))
+(test-end)
 
 (test-begin "size")
 (test-equal 0 (size '()))
@@ -64,7 +69,11 @@
                 #("a" "b" "c" "d" "e" "f" "g" "h" "i")
                 (dict 1 "a" 2 "b" 3 "c" 4 "d" 5 "e" 6 "f" 7 "g" 8 "h" 9 "i")
                 "abcdefghi"))
+(test-end)
 
+(test-begin "put!")
+(test-equal 3 (ref b: (put! b: 3 (dict b: 2))))
+(test-equal #(1 9 3) (put! 1 9 (vector 1 2 3)))
 (test-end)
 
 
@@ -200,8 +209,9 @@
 (test-equal 3 (for-max (: a 1 4) a))
 (test-equal #t (for-any? (: a 1 4) (odd? a)))
 (test-equal #f (for-any? (: a 1 4) (> a 3)))
-(test-equal #f (for-every? (: a 1 4) (odd? a)))
-(test-equal #t (for-every? (: a 1 4) (<= a 3)))
+(test-equal #f (for-all? (: a 1 4) (odd? a)))
+(test-equal #t (for-all? (: a 1 4) (<= a 3)))
+(test-equal #t (for-all? (: a (list 1 2 3)) (<= a 3)))
 (test-equal 2 (for-first 100 (: a 1 4) (if (even? a)) a))
 (test-equal 2 (for-first (: a 1 4) (if (even? a)) a))
 (test-equal 100 (for-first 100 (: a 1 4) (if (> a 10)) a))
@@ -218,4 +228,43 @@
 (test-equal '((1 2) (2 3) (3 4)) (for-list (:consecutive v1 v2 '(1 2 3 4)) (list v1 v2)))
 (test-equal '((1 2 3) (2 3 4)) (for-list (:consecutive v1 v2 v3 '(1 2 3 4)) (list v1 v2 v3)))
 (test-equal '((1 2 3 4)) (for-list (:consecutive v1 v2 v3 v4 '(1 2 3 4)) (list v1 v2 v3 v4)))
+(test-end)
+
+(test-begin "map")
+(test-equal '(2 4 6) (map (Λ * 2 <>) '(1 2 3)))
+(test-equal #(2 4 6) (map (Λ * 2 <>) #(1 2 3)))
+(test-equal "axbxcx" (map (Λ string-append <> "x") "abc"))
+;; TODO missing "equal" for dictionaries
+(var (rslt (map (λ (k v) (values (string-append k "x") (* 2 v))) (dict "a" 1 "b" 2)))
+  (test-equal 2 (ref "ax" rslt))
+  (test-equal 4 (ref "bx" rslt)))
+
+(test-equal '(2 4 6) (map + '(1 2 3) '(1 2 3)))
+(test-equal #(2 4 6) (map + #(1 2 3) #(1 2 3)))
+(test-equal "acbbca" (map str "abc" "cba"))
+
+;; TODO collection with different sizes
+;; TODO Map through multiple dicts
+(test-end)
+
+(test-begin "filter")
+(test-equal '(1 3) (filter odd? '(1 2 3 4)))
+(test-equal #(2 4) (filter even? #(1 2 3 4)))
+;; TODO Filter string
+;; TODO Filter dict
+;; TODO Filter multiple collections
+
+(test-begin "filter-out")
+(test-equal '(2 4) (filter-out odd? '(1 2 3 4)))
+(test-equal #(1 3) (filter-out even? #(1 2 3 4)))
+;; TODO Filter out string
+;; TODO Filter out dict
+;; TODO Filter out multiple collections
+
+(test-begin "filter-map")
+(test-equal '(0 2) (filter-map (λ (e) (if (odd? e) (sub1 e) #f)) '(1 2 3 4)))
+(test-equal #(3 5) (filter-map (λ (e) (if (even? e) (add1 e) #f)) #(1 2 3 4)))
+;; TODO Filter out string
+;; TODO Filter out dict
+;; TODO Filter out multiple collections
 (test-end)

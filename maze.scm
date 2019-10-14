@@ -7,7 +7,8 @@
   #:use-module (ice-9 format)
   #:use-module (srfi srfi-88) ;; keywords
   #:use-module (srfi srfi-69) ;; hashtable
-  #:use-module (sugar)
+  #:use-module (syntax base)
+  #:use-module (collections base)
   #:use-module (render)
   #:use-module (random)
   #:use-module (base)
@@ -161,13 +162,13 @@
     (carve unvisited)))
 
 ;; Randow walkers for textures in Aldous Broder and Wilson
-(var sample-neighbor-vert-nw (make-neighbor-sampler 0.8 0.0 0.2 0.0))
-(var sample-neighbor-vert-sw (make-neighbor-sampler 0.0 0.8 0.2 0.0))
-(var sample-neighbor-horz-nw (make-neighbor-sampler 0.2 0.0 0.8 0.0))
-(var sample-neighbor-horz-sw (make-neighbor-sampler 0.0 0.2 0.8 0.0))
-(var sample-neighbor-horz-nm (make-neighbor-sampler 0.04 0.0  0.48 0.48))
-(var sample-neighbor-horz-sm (make-neighbor-sampler 0.0  0.04 0.48 0.48))
-(var sample-neighbor-random (make-neighbor-sampler 0.25 0.25 0.25 0.25))
+(var sample-neighbor-vert-nw (make-neighbor-sampler '(0.8 0.0 0.2 0.0)))
+(var sample-neighbor-vert-sw (make-neighbor-sampler '(0.0 0.8 0.2 0.0)))
+(var sample-neighbor-horz-nw (make-neighbor-sampler '(0.2 0.0 0.8 0.0)))
+(var sample-neighbor-horz-sw (make-neighbor-sampler '(0.0 0.2 0.8 0.0)))
+(var sample-neighbor-horz-nm (make-neighbor-sampler '(0.04 0.0  0.48 0.48)))
+(var sample-neighbor-horz-sm (make-neighbor-sampler '(0.0  0.04 0.48 0.48)))
+(var sample-neighbor-random (make-neighbor-sampler '(0.25 0.25 0.25 0.25)))
 
 (def (sample-neighbor-multitexture (grid <grid>))
   (def (sample-neighbor cell)
